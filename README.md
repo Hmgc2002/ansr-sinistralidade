@@ -19,6 +19,7 @@ src/
   parser_xlsx.py   # normaliza os anexos .xlsx (2020-2025) em CSV
   parser_pdf.py    # extrai tabelas dos relatórios nacionais em PDF (1999-2019)
   parser_pontos_negros.py  # extrai a lista de pontos negros (2019-2022) em PDF
+  parser_distrito.py  # extrai sinistralidade por concelho dos relatórios por distrito
 data/
   raw/             # ficheiros descarregados (não versionado, ~290 MB)
   processed/       # CSVs gerados (versionado)
@@ -32,6 +33,7 @@ data/
 .\.venv\Scripts\python.exe src\parser_xlsx.py   # -> data/processed/*.csv (2020-2025)
 .\.venv\Scripts\python.exe src\parser_pdf.py    # -> data/processed/pdf_raw/*, pdf_tables_index.csv (1999-2019)
 .\.venv\Scripts\python.exe src\parser_pontos_negros.py  # -> data/processed/pontos_negros.csv (requer PDFs em data/raw/pontos_negros/PN_<ano>.pdf)
+.\.venv\Scripts\python.exe src\parser_distrito.py  # -> data/processed/sinistralidade_por_concelho.csv (2011-2018, cobertura parcial)
 ```
 
 ## O que existe na fonte (ANSR)
@@ -96,6 +98,39 @@ outra). Resultado: 82 registos (2019-2022), dos quais 2 (a mesma
 entrada, partida por uma quebra de página) ficaram incompletos (falha
 visível, não silenciosa — ver limitações).
 
+## Sinistralidade por concelho (relatórios de distrito)
+
+Cada distrito tem um relatório PDF anual próprio (ex. `Aveiro 2015.pdf`)
+com uma tabela "Acidentes e vítimas segundo o concelho" — dados ao nível
+do **concelho (município)**, ao contrário de tudo o resto neste projeto
+(que é nacional ou, no máximo, por distrito). Isto é o que permite, em
+princípio, um mapa coroplético real: nomes de concelho fazem match
+direto com os limites administrativos oficiais.
+
+**Cobertura real: 2013 e 2015–2018 completos (18 distritos), 2014
+parcial (15 de 18 — faltam Castelo Branco, Viana do Castelo e Vila
+Real)**. Não é 2004-2018 como seria de esperar por haver PDFs para
+todos esses anos:
+
+- **2004–2010**: layout diferente e mais antigo (tabela "Vítimas
+  segundo o concelho", sem o prefixo "Acidentes e", com colunas 24h/30
+  dias lado a lado, sem secção "UTENTES") — não suportado por este
+  parser.
+- **2011–2012**: têm o layout novo, mas o cabeçalho de coluna repetido
+  ("Acidentes Vítimas Feridos Feridos Total Índice de" / "c/ vítimas
+  mortais graves leves vítimas gravidade") só aparece **uma vez** no
+  documento nesses dois anos especificamente, em vez de uma vez por
+  tabela — sem essa repetição não há como distinguir a tabela de
+  concelho das ~9 outras tabelas com o mesmo cabeçalho (por mês, por dia
+  da semana, por hora do dia, ...) só pela posição. Uma validação de
+  sanidade deteta este caso (os "concelhos" extraídos seriam na
+  realidade nomes de mês/dia da semana) e descarta-o em vez de aceitar
+  dados errados.
+- Vários anos têm **dois ficheiros PDF não-"24h" para o mesmo
+  distrito** (ex. `Aveiro 2015.pdf` e `Aveiro 2015 30d.pdf`) — sem
+  deduplicação isto duplicava todas as linhas; o parser mantém só um
+  ficheiro por (distrito, ano), preferindo o que tem "30" no nome.
+
 ## Outputs gerados
 
 - `data/processed/manifest.csv` — catálogo de todos os 490 documentos
@@ -125,6 +160,11 @@ visível, não silenciosa — ver limitações).
 - `data/processed/pontos_negros.csv` — 82 registos de pontos negros (2019-2022):
   `year, entidade_gestora, estrada, km, relatorio_data,
   estado_intervencao` (ver secção "Pontos Negros" acima).
+- `data/processed/sinistralidade_por_concelho.csv` — 1631 registos
+  (distrito × ano × concelho), cobertura 2013/2015-2018 completa +
+  2014 parcial (ver secção acima): `distrito, ano, concelho,
+  acidentes_com_vitimas, vitimas_mortais, feridos_graves, feridos_leves,
+  total_vitimas, indice_gravidade, source_file`.
 
 ## Limitações conhecidas / próximos passos
 
