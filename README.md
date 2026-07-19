@@ -18,6 +18,7 @@ src/
   downloader.py    # descarrega os ficheiros do manifesto (resumível)
   parser_xlsx.py   # normaliza os anexos .xlsx (2020-2025) em CSV
   parser_pdf.py    # extrai tabelas dos relatórios nacionais em PDF (1999-2019)
+  parser_pontos_negros.py  # extrai a lista de pontos negros (2019-2022) em PDF
 data/
   raw/             # ficheiros descarregados (não versionado, ~290 MB)
   processed/       # CSVs gerados (versionado)
@@ -30,6 +31,7 @@ data/
 .\.venv\Scripts\python.exe src\downloader.py    # -> data/raw/<ano>/...
 .\.venv\Scripts\python.exe src\parser_xlsx.py   # -> data/processed/*.csv (2020-2025)
 .\.venv\Scripts\python.exe src\parser_pdf.py    # -> data/processed/pdf_raw/*, pdf_tables_index.csv (1999-2019)
+.\.venv\Scripts\python.exe src\parser_pontos_negros.py  # -> data/processed/pontos_negros.csv (requer PDFs em data/raw/pontos_negros/PN_<ano>.pdf)
 ```
 
 ## O que existe na fonte (ANSR)
@@ -58,6 +60,34 @@ ambos os parsers, porque é a que aparece de forma mais consistente ao
 longo dos anos; isto deve ser tido em conta em qualquer comparação com
 estatísticas internacionais.
 
+## Pontos Negros (troços perigosos)
+
+A ANSR publica também, numa secção separada do site (`Segurança
+Rodoviária > Pontos Negros Recomendações`, não em `Estatísticas`), PDFs
+anuais com inspeções a "pontos negros" (troços rodoviários perigosos) e
+as recomendações de segurança feitas às entidades gestoras das vias.
+
+**Importante para quem queira um mapa**: estes pontos são identificados
+por **estrada + quilómetro** (ex.: "A28, Km 3,500 ao Km 3,600"), não por
+coordenadas GPS. Não há geolocalização pronta a usar — construir um mapa
+exigiria geocodificar estes pares estrada/km, o que precisaria de uma
+fonte adicional (ex.: dados abertos da Infraestruturas de Portugal/IMT
+com referenciação geográfica da rede rodoviária), não explorada neste
+projeto.
+
+Extração: `pdfplumber` não deteta as tabelas destes PDFs de forma
+fiável — a estratégia de deteção por linhas perde silenciosamente
+células de Entidade/Estrada/Km em algumas linhas, e a estratégia por
+texto fragmenta as colunas de texto livre de forma instável. O
+`parser_pontos_negros.py` usa antes as posições (x, y) de cada palavra
+para reconstruir apenas os campos estruturados fiáveis (Entidade,
+Estrada, Km, Data do relatório, Estado de intervenção), **descartando
+deliberadamente** o texto livre de "Problemas identificados" e
+"Recomendações" — juntar esse texto ao registo certo revelou-se
+demasiado arriscado (risco de atribuir o problema de uma estrada a
+outra). Resultado: 81 registos (2019-2022), dos quais 1 ficou
+incompleto (falha visível, não silenciosa — ver limitações).
+
 ## Outputs gerados
 
 - `data/processed/manifest.csv` — catálogo de todos os 490 documentos
@@ -77,6 +107,9 @@ estatísticas internacionais.
 - `data/processed/pdf_raw/<ano>/p<página>_t<tabela>.csv` — dump bruto de
   cada tabela detetada pelo `pdfplumber`, célula a célula, tal como
   extraída do PDF (sem tentar interpretar o layout).
+- `data/processed/pontos_negros.csv` — 81 pontos negros (2019-2022):
+  `year, entidade_gestora, estrada, km, relatorio_data,
+  estado_intervencao` (ver secção "Pontos Negros" acima).
 
 ## Limitações conhecidas / próximos passos
 
@@ -97,3 +130,10 @@ estatísticas internacionais.
   (com cabeçalhos de várias linhas, células vazias, linhas de totais);
   útil para não perder informação, mas a maioria das tabelas ainda não
   tem uma versão "tidy" própria como a série mensal nacional.
+- `pontos_negros.csv` não tem geolocalização (ver secção acima) e não
+  inclui o texto de "Problemas identificados"/"Recomendações" (descartado
+  deliberadamente por risco de atribuição incorreta). 1 dos 81 registos
+  (ano 2021) ficou incompleto — o campo `estado_intervencao` contém
+  texto residual em vez do estado real; fica visível no CSV para quem
+  quiser corrigir à mão ou filtrar. Só cobre 2019-2022 — não encontrei
+  PDFs "PN" para 2023+ na página da fonte à data da recolha.
