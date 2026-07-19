@@ -20,6 +20,10 @@ src/
   parser_pdf.py    # extrai tabelas dos relatórios nacionais em PDF (1999-2019)
   parser_pontos_negros.py  # extrai a lista de pontos negros (2019-2022) em PDF
   parser_distrito.py  # extrai sinistralidade por concelho dos relatórios por distrito
+  build_concelhos_map.py  # gera o mapa coroplético (simplifica o GeoJSON, cruza com o CSV)
+dashboard/
+  pontos_negros.html      # dashboard filtrável dos pontos negros
+  concelhos_map.html      # mapa coroplético por concelho
 data/
   raw/             # ficheiros descarregados (não versionado, ~290 MB)
   processed/       # CSVs gerados (versionado)
@@ -34,6 +38,7 @@ data/
 .\.venv\Scripts\python.exe src\parser_pdf.py    # -> data/processed/pdf_raw/*, pdf_tables_index.csv (1999-2019)
 .\.venv\Scripts\python.exe src\parser_pontos_negros.py  # -> data/processed/pontos_negros.csv (requer PDFs em data/raw/pontos_negros/PN_<ano>.pdf)
 .\.venv\Scripts\python.exe src\parser_distrito.py  # -> data/processed/sinistralidade_por_concelho.csv (2011-2018, cobertura parcial)
+.\.venv\Scripts\python.exe src\build_concelhos_map.py  # -> data/processed/concelhos_map.json (requer data/ContinenteConcelhos.geojson, ver secção do mapa)
 ```
 
 ## O que existe na fonte (ANSR)
@@ -131,6 +136,37 @@ todos esses anos:
   deduplicação isto duplicava todas as linhas; o parser mantém só um
   ficheiro por (distrito, ano), preferindo o que tem "30" no nome.
 
+## Mapa coroplético (dashboard/concelhos_map.html)
+
+Usa `sinistralidade_por_concelho.csv` para desenhar um mapa coroplético
+real de Portugal continental, com seletor de ano e de indicador
+(acidentes, vítimas mortais, feridos graves/leves, índice de
+gravidade), tooltip por concelho, top 10, e tabela completa.
+
+Como o dashboard é publicado como Artifact (sem acesso à rede em tempo
+de execução — nada de tile servers como Leaflet/OpenStreetMap usariam),
+o mapa não pode ser um mapa de "tiles": é construído a partir das
+fronteiras administrativas oficiais (CAOP, via
+[nmota/caop_GeoJSON](https://github.com/nmota/caop_GeoJSON),
+`ContinenteConcelhos.geojson`, 278 concelhos), convertidas para paths
+SVG estáticos por `build_concelhos_map.py`:
+
+- As coordenadas do GeoJSON fonte **não são lon/lat** — apesar de ser
+  GeoJSON válido, estão numa projeção nacional portuguesa em metros
+  (valores como `-20560.75, 113803.91`). Simplificar com uma tolerância
+  pensada em graus (o erro inicial) não fazia nada; corrigido para
+  metros (~400m de tolerância) uma vez percebida a unidade real.
+- Simplificação por Douglas-Peucker (implementação própria, sem
+  shapely/pyproj) reduziu o ficheiro de 36,5 MB (geometria ao detalhe
+  de precisão cadastral) para ~415 KB — adequado para embutir num
+  Artifact.
+- Nomes de concelho do CSV (extraídos de PDF, por vezes sem "de"/"da"
+  ou com sufixos como "Lagoa (Algarve)") precisaram de um pequeno
+  dicionário de aliases para bater certo com os nomes oficiais do CAOP.
+- O ficheiro `ContinenteConcelhos.geojson` de origem (36,5 MB) não é
+  versionado — só o `concelhos_map.json` já simplificado e embutido no
+  HTML.
+
 ## Outputs gerados
 
 - `data/processed/manifest.csv` — catálogo de todos os 490 documentos
@@ -165,6 +201,10 @@ todos esses anos:
   2014 parcial (ver secção acima): `distrito, ano, concelho,
   acidentes_com_vitimas, vitimas_mortais, feridos_graves, feridos_leves,
   total_vitimas, indice_gravidade, source_file`.
+- `data/processed/concelhos_map.json` — 278 concelhos com path SVG
+  simplificado + os dados de `sinistralidade_por_concelho.csv` por ano,
+  já cruzados por nome (ver secção do mapa acima); é o que está embutido
+  em `dashboard/concelhos_map.html`.
 
 ## Limitações conhecidas / próximos passos
 
