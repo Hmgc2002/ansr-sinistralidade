@@ -121,20 +121,20 @@ Leiria,2004,Alvaiázere,53,3,10,62,75,5.7,Leiria 2004.pdf
 Leiria,2004,Ansião,55,2,10,74,86,3.6,Leiria 2004.pdf
 Leiria,2004,Batalha,88,6,8,107,121,6.8,Leiria 2004.pdf
 Leiria,2004,Bombarral,92,4,8,114,126,4.3,Leiria 2004.pdf
-Leiria,2004,Rainha,241,5,28,270,303,2.1,Leiria 2004.pdf
-Leiria,2004,Pêra,13,0,2,15,17,0.0,Leiria 2004.pdf
-Leiria,2004,Vinhos,26,0,0,28,28,0.0,Leiria 2004.pdf
+Leiria,2004,Caldas da Rainha,241,5,28,270,303,2.1,Leiria 2004.pdf
+Leiria,2004,Castanheira de Pêra,13,0,2,15,17,0.0,Leiria 2004.pdf
+Leiria,2004,Figueiró dos Vinhos,26,0,0,28,28,0.0,Leiria 2004.pdf
 Leiria,2004,Leiria,787,19,56,922,997,2.4,Leiria 2004.pdf
 Leiria,2004,Marinha Grande,204,6,14,249,269,2.9,Leiria 2004.pdf
 Leiria,2004,Nazaré,80,1,6,102,109,1.3,Leiria 2004.pdf
 Leiria,2004,Óbidos,89,3,12,127,142,3.4,Leiria 2004.pdf
-Leiria,2004,Grande,23,0,1,26,27,0.0,Leiria 2004.pdf
+Leiria,2004,Pedrógão Grande,23,0,1,26,27,0.0,Leiria 2004.pdf
 Leiria,2004,Peniche,118,4,17,132,153,3.4,Leiria 2004.pdf
 Leiria,2004,Pombal,391,27,40,487,554,6.9,Leiria 2004.pdf
 Leiria,2004,Porto de Mós,133,8,12,163,183,6.0,Leiria 2004.pdf
 Lisboa,2004,Alenquer,153,5,9,205,219,3.3,Lisboa 2004.pdf
 Lisboa,2004,Amadora,330,3,23,376,402,0.9,Lisboa 2004.pdf
-Lisboa,2004,Vinhos,39,0,1,53,54,0.0,Lisboa 2004.pdf
+Lisboa,2004,Arruda dos Vinhos,39,0,1,53,54,0.0,Lisboa 2004.pdf
 Lisboa,2004,Azambuja,132,10,18,176,204,7.6,Lisboa 2004.pdf
 Lisboa,2004,Cadaval,70,3,7,80,90,4.3,Lisboa 2004.pdf
 Lisboa,2004,Cascais,582,10,57,698,765,1.7,Lisboa 2004.pdf
@@ -145,9 +145,9 @@ Lisboa,2004,Mafra,308,6,23,383,412,1.9,Lisboa 2004.pdf
 Lisboa,2004,Odivelas,315,2,25,388,415,0.6,Lisboa 2004.pdf
 Lisboa,2004,Oeiras,589,9,40,684,733,1.5,Lisboa 2004.pdf
 Lisboa,2004,Sintra,992,8,81,1238,1327,0.8,Lisboa 2004.pdf
-Lisboa,2004,Agraço,47,3,5,63,71,6.4,Lisboa 2004.pdf
+Lisboa,2004,Sobral Monte Agraço,47,3,5,63,71,6.4,Lisboa 2004.pdf
 Lisboa,2004,Torres Vedras,296,7,39,385,431,2.4,Lisboa 2004.pdf
-Lisboa,2004,Xira,430,13,38,546,597,3.0,Lisboa 2004.pdf
+Lisboa,2004,Vila Franca de Xira,430,13,38,546,597,3.0,Lisboa 2004.pdf
 Portalegre,2004,Alter do Chão,16,0,2,17,19,0.0,Portalegre 2004.pdf
 Portalegre,2004,Arronches,13,0,2,19,21,0.0,Portalegre 2004.pdf
 Portalegre,2004,Avis,25,0,6,23,29,0.0,Portalegre 2004.pdf
@@ -169,18 +169,18 @@ Porto,2004,Felgueiras,210,11,11,270,292,5.2,Porto 2004.pdf
 Porto,2004,Gondomar,380,3,32,471,506,0.8,Porto 2004.pdf
 Porto,2004,Lousada,152,5,21,211,237,3.3,Porto 2004.pdf
 Porto,2004,Maia,424,7,23,527,557,1.7,Porto 2004.pdf
-Porto,2004,Canaveses,140,3,12,189,204,2.1,Porto 2004.pdf
+Porto,2004,Marco de Canaveses,140,3,12,189,204,2.1,Porto 2004.pdf
 Porto,2004,Matosinhos,484,4,38,580,622,0.8,Porto 2004.pdf
-Porto,2004,Ferreira,194,2,18,253,273,1.0,Porto 2004.pdf
+Porto,2004,Paços de Ferreira,194,2,18,253,273,1.0,Porto 2004.pdf
 Porto,2004,Paredes,254,6,32,323,361,2.4,Porto 2004.pdf
 Porto,2004,Penafiel,253,16,24,335,375,6.3,Porto 2004.pdf
 Porto,2004,Porto,912,13,40,1088,1141,1.4,Porto 2004.pdf
-Porto,2004,Varzim,246,7,22,326,355,2.8,Porto 2004.pdf
+Porto,2004,Póvoa de Varzim,246,7,22,326,355,2.8,Porto 2004.pdf
 Porto,2004,Santo Tirso,242,6,47,308,361,2.5,Porto 2004.pdf
 Porto,2004,Trofa,141,1,9,200,210,0.7,Porto 2004.pdf
 Porto,2004,Valongo,262,9,29,329,367,3.4,Porto 2004.pdf
 Porto,2004,Vila do Conde,322,7,24,413,444,2.2,Porto 2004.pdf
-Porto,2004,Gaia,751,21,46,922,989,2.8,Porto 2004.pdf
+Porto,2004,Vila Nova de Gaia,751,21,46,922,989,2.8,Porto 2004.pdf
 Santarém,2004,Abrantes,167,8,30,183,221,4.8,Santarém 2004.pdf
 Santarém,2004,Alcanena,79,2,12,98,112,2.5,Santarém 2004.pdf
 Santarém,2004,Almeirim,139,4,19,160,183,2.9,Santarém 2004.pdf
@@ -191,17 +191,17 @@ Santarém,2004,Chamusca,71,2,11,90,103,2.8,Santarém 2004.pdf
 Santarém,2004,Constância,18,0,4,23,27,0.0,Santarém 2004.pdf
 Santarém,2004,Coruche,116,9,26,138,173,7.8,Santarém 2004.pdf
 Santarém,2004,Entroncamento,52,2,2,61,65,3.8,Santarém 2004.pdf
-Santarém,2004,Zêzere,64,1,16,85,102,1.6,Santarém 2004.pdf
+Santarém,2004,Ferreira do Zêzere,64,1,16,85,102,1.6,Santarém 2004.pdf
 Santarém,2004,Golegã,33,1,2,37,40,3.0,Santarém 2004.pdf
 Santarém,2004,Mação,24,1,1,32,34,4.2,Santarém 2004.pdf
 Santarém,2004,Ourém,333,11,81,358,450,3.3,Santarém 2004.pdf
 Santarém,2004,Rio Maior,134,3,33,152,188,2.2,Santarém 2004.pdf
-Santarém,2004,Magos,109,6,26,116,148,5.5,Santarém 2004.pdf
+Santarém,2004,Salvaterra de Magos,109,6,26,116,148,5.5,Santarém 2004.pdf
 Santarém,2004,Santarém,366,11,58,462,531,3.0,Santarém 2004.pdf
 Santarém,2004,Sardoal,22,2,4,24,30,9.1,Santarém 2004.pdf
 Santarém,2004,Tomar,244,5,37,299,341,2.0,Santarém 2004.pdf
 Santarém,2004,Torres Novas,172,4,28,192,224,2.3,Santarém 2004.pdf
-Santarém,2004,Barquinha,52,4,10,59,73,7.7,Santarém 2004.pdf
+Santarém,2004,Vila Nova da Barquinha,52,4,10,59,73,7.7,Santarém 2004.pdf
 Setúbal,2004,Alcácer do Sal,124,13,29,178,220,10.5,Setúbal 2004.pdf
 Setúbal,2004,Alcochete,59,3,5,75,83,5.1,Setúbal 2004.pdf
 Setúbal,2004,Almada,423,9,34,508,551,2.1,Setúbal 2004.pdf
@@ -210,7 +210,7 @@ Setúbal,2004,Grândola,101,10,40,125,175,9.9,Setúbal 2004.pdf
 Setúbal,2004,Moita,175,0,29,218,247,0.0,Setúbal 2004.pdf
 Setúbal,2004,Montijo,206,9,22,270,301,4.4,Setúbal 2004.pdf
 Setúbal,2004,Palmela,371,19,51,474,544,5.1,Setúbal 2004.pdf
-Setúbal,2004,Cacém,117,7,23,155,185,6.0,Setúbal 2004.pdf
+Setúbal,2004,Santiago do Cacém,117,7,23,155,185,6.0,Setúbal 2004.pdf
 Setúbal,2004,Seixal,435,5,32,549,586,1.1,Setúbal 2004.pdf
 Setúbal,2004,Sesimbra,124,7,12,158,177,5.6,Setúbal 2004.pdf
 Setúbal,2004,Setúbal,500,7,37,631,675,1.4,Setúbal 2004.pdf
@@ -219,25 +219,25 @@ Viana do Castelo,2004,Valdevez,65,3,9,77,89,4.6,Viana do Castelo 2004.pdf
 Viana do Castelo,2004,Caminha,64,4,1,78,83,6.3,Viana do Castelo 2004.pdf
 Viana do Castelo,2004,Melgaço,9,3,3,13,19,33.3,Viana do Castelo 2004.pdf
 Viana do Castelo,2004,Monção,50,3,1,58,62,6.0,Viana do Castelo 2004.pdf
-Viana do Castelo,2004,Coura,15,0,0,18,18,0.0,Viana do Castelo 2004.pdf
+Viana do Castelo,2004,Paredes de Coura,15,0,0,18,18,0.0,Viana do Castelo 2004.pdf
 Viana do Castelo,2004,Ponte da Barca,33,3,2,50,55,9.1,Viana do Castelo 2004.pdf
 Viana do Castelo,2004,Ponte de Lima,178,0,9,242,251,0.0,Viana do Castelo 2004.pdf
 Viana do Castelo,2004,Valença,81,4,7,100,111,4.9,Viana do Castelo 2004.pdf
-Viana do Castelo,2004,Castelo,321,11,19,439,469,3.4,Viana do Castelo 2004.pdf
-Viana do Castelo,2004,Cerveira,44,1,4,56,61,2.3,Viana do Castelo 2004.pdf
+Viana do Castelo,2004,Viana do Castelo,321,11,19,439,469,3.4,Viana do Castelo 2004.pdf
+Viana do Castelo,2004,Vila Nova de Cerveira,44,1,4,56,61,2.3,Viana do Castelo 2004.pdf
 Vila Real,2004,Alijó,42,2,3,49,54,4.8,Vila Real 2004.pdf
 Vila Real,2004,Boticas,11,0,0,17,17,0.0,Vila Real 2004.pdf
 Vila Real,2004,Chaves,172,5,35,210,250,2.9,Vila Real 2004.pdf
 Vila Real,2004,Mesão Frio,17,0,4,27,31,0.0,Vila Real 2004.pdf
-Vila Real,2004,Basto,14,0,4,17,21,0.0,Vila Real 2004.pdf
+Vila Real,2004,Mondim de Basto,14,0,4,17,21,0.0,Vila Real 2004.pdf
 Vila Real,2004,Montalegre,31,1,5,41,47,3.2,Vila Real 2004.pdf
 Vila Real,2004,Murça,23,3,4,29,36,13.0,Vila Real 2004.pdf
 Vila Real,2004,Peso da Régua,40,0,1,54,55,0.0,Vila Real 2004.pdf
 Vila Real,2004,Ribeira de Pena,12,0,1,17,18,0.0,Vila Real 2004.pdf
 Vila Real,2004,Sabrosa,13,1,1,17,19,7.7,Vila Real 2004.pdf
-Vila Real,2004,Penaguião,19,0,0,30,30,0.0,Vila Real 2004.pdf
+Vila Real,2004,Santa Marta de Penaguião,19,0,0,30,30,0.0,Vila Real 2004.pdf
 Vila Real,2004,Valpaços,41,0,2,52,54,0.0,Vila Real 2004.pdf
-Vila Real,2004,Aguiar,53,3,3,66,72,5.7,Vila Real 2004.pdf
+Vila Real,2004,Vila Pouca de Aguiar,53,3,3,66,72,5.7,Vila Real 2004.pdf
 Vila Real,2004,Vila Real,229,11,28,279,318,4.8,Vila Real 2004.pdf
 Viseu,2004,Armamar,14,3,6,19,28,21.4,Viseu 2004.pdf
 Viseu,2004,Carregal do Sal,49,0,2,59,61,0.0,Viseu 2004.pdf
@@ -245,22 +245,22 @@ Viseu,2004,Castro Daire,40,2,3,45,50,5.0,Viseu 2004.pdf
 Viseu,2004,Cinfães,43,1,3,52,56,2.3,Viseu 2004.pdf
 Viseu,2004,Lamego,64,3,5,100,108,4.7,Viseu 2004.pdf
 Viseu,2004,Mangualde,99,7,12,119,138,7.1,Viseu 2004.pdf
-Viseu,2004,Beira,38,1,3,50,54,2.6,Viseu 2004.pdf
+Viseu,2004,Moimenta da Beira,38,1,3,50,54,2.6,Viseu 2004.pdf
 Viseu,2004,Mortágua,42,2,3,53,58,4.8,Viseu 2004.pdf
 Viseu,2004,Nelas,66,2,4,112,118,3.0,Viseu 2004.pdf
-Viseu,2004,Frades,64,1,7,76,84,1.6,Viseu 2004.pdf
-Viseu,2004,Castelo,21,0,3,22,25,0.0,Viseu 2004.pdf
+Viseu,2004,Oliveira de Frades,64,1,7,76,84,1.6,Viseu 2004.pdf
+Viseu,2004,Penalva do Castelo,21,0,3,22,25,0.0,Viseu 2004.pdf
 Viseu,2004,Penedono,8,0,0,12,12,0.0,Viseu 2004.pdf
 Viseu,2004,Resende,18,0,5,19,24,0.0,Viseu 2004.pdf
-Viseu,2004,Dão,66,8,6,99,113,12.1,Viseu 2004.pdf
-Viseu,2004,Pesqueira,22,1,2,29,32,4.5,Viseu 2004.pdf
-Viseu,2004,Sul,72,1,5,96,102,1.4,Viseu 2004.pdf
+Viseu,2004,Santa Comba Dão,66,8,6,99,113,12.1,Viseu 2004.pdf
+Viseu,2004,São João da Pesqueira,22,1,2,29,32,4.5,Viseu 2004.pdf
+Viseu,2004,São Pedro do Sul,72,1,5,96,102,1.4,Viseu 2004.pdf
 Viseu,2004,Sátão,67,1,10,86,97,1.5,Viseu 2004.pdf
 Viseu,2004,Sernancelhe,28,1,3,39,43,3.6,Viseu 2004.pdf
 Viseu,2004,Tabuaço,14,0,1,15,16,0.0,Viseu 2004.pdf
 Viseu,2004,Tarouca,29,0,6,36,42,0.0,Viseu 2004.pdf
 Viseu,2004,Tondela,151,2,15,177,194,1.3,Viseu 2004.pdf
-Viseu,2004,Paiva,19,0,1,29,30,0.0,Viseu 2004.pdf
+Viseu,2004,Vila Nova de Paiva,19,0,1,29,30,0.0,Viseu 2004.pdf
 Viseu,2004,Viseu,490,13,40,644,697,2.7,Viseu 2004.pdf
 Viseu,2004,Vouzela,89,3,12,125,140,3.4,Viseu 2004.pdf
 Évora,2004,Alandroal,24,1,9,24,34,4.2,Évora.pdf
@@ -480,13 +480,19 @@ Santarém,2005,Sardoal,24,1,0,28,29,4.2,Santarém 2005.pdf
 Santarém,2005,Tomar,203,2,26,258,286,1.0,Santarém 2005.pdf
 Santarém,2005,Torres Novas,137,1,13,154,168,0.7,Santarém 2005.pdf
 Santarém,2005,V. N. Barquinha,36,1,8,49,58,2.8,Santarém 2005.pdf
-Setúbal,2005,% % % % % Alcácer do Sal,107,12,20,150,182,11.2,Setúbal 2005.pdf
-Setúbal,2005,Alcochete Almada,361,5,35,452,492,1.4,Setúbal 2005.pdf
-Setúbal,2005,Barreiro Grândola,116,12,31,159,202,10.3,Setúbal 2005.pdf
-Setúbal,2005,Moita Montijo,183,7,20,228,255,3.8,Setúbal 2005.pdf
-Setúbal,2005,Palmela Santiago Cacém,126,10,23,162,195,7.9,Setúbal 2005.pdf
-Setúbal,2005,Seixal Sesimbra,123,2,12,146,160,1.6,Setúbal 2005.pdf
-Setúbal,2005,Setúbal Sines,40,2,9,52,63,5.0,Setúbal 2005.pdf
+Setúbal,2005,Alcácer do Sal,107,12,20,150,182,11.2,Setúbal 2005.pdf
+Setúbal,2005,Alcochete,58,2,2,73,77,3.4,Setúbal 2005.pdf
+Setúbal,2005,Almada,361,5,35,452,492,1.4,Setúbal 2005.pdf
+Setúbal,2005,Barreiro,217,6,18,295,319,2.8,Setúbal 2005.pdf
+Setúbal,2005,Grândola,116,12,31,159,202,10.3,Setúbal 2005.pdf
+Setúbal,2005,Moita,140,7,22,169,198,5.0,Setúbal 2005.pdf
+Setúbal,2005,Montijo,183,7,20,228,255,3.8,Setúbal 2005.pdf
+Setúbal,2005,Palmela,332,24,26,407,457,7.2,Setúbal 2005.pdf
+Setúbal,2005,Santiago Cacém,126,10,23,162,195,7.9,Setúbal 2005.pdf
+Setúbal,2005,Seixal,405,9,35,518,562,2.2,Setúbal 2005.pdf
+Setúbal,2005,Sesimbra,123,2,12,146,160,1.6,Setúbal 2005.pdf
+Setúbal,2005,Setúbal,431,3,19,536,558,0.7,Setúbal 2005.pdf
+Setúbal,2005,Sines,40,2,9,52,63,5.0,Setúbal 2005.pdf
 Viana do Castelo,2005,Arcos Valdevez,62,0,8,85,93,0.0,Viana do Castelo 2005.pdf
 Viana do Castelo,2005,Caminha,65,1,2,86,89,1.5,Viana do Castelo 2005.pdf
 Viana do Castelo,2005,Melgaço,15,2,7,13,22,13.3,Viana do Castelo 2005.pdf
@@ -595,12 +601,18 @@ Braga,2006,Vieira do Minho,31,1,6,41,48,3.2,Braga 2006.pdf
 Braga,2006,V. N. de Famalicão,475,5,34,643,682,1.1,Braga 2006.pdf
 Braga,2006,Vila Verde,170,6,6,227,239,3.5,Braga 2006.pdf
 Braga,2006,Vizela,53,1,8,64,73,1.9,Braga 2006.pdf
-Bragança,2006,% % % % % grav. Alfândega da Fé,11,0,0,18,18,0.0,Bragança 2006.pdf
-Bragança,2006,Bragança Carrazeda Ansiães,12,1,2,13,16,8.3,Bragança 2006.pdf
-Bragança,2006,Freixo Espada Cinta Macedo Cavaleiros,55,3,9,66,78,5.5,Bragança 2006.pdf
-Bragança,2006,Miranda do Douro Mirandela,77,4,13,129,146,5.2,Bragança 2006.pdf
-Bragança,2006,Mogadouro Torre de Moncorvo,25,2,1,33,36,8.0,Bragança 2006.pdf
-Bragança,2006,Vila Flor Vimioso,8,0,2,9,11,0.0,Bragança 2006.pdf
+Bragança,2006,Alfândega da Fé,11,0,0,18,18,0.0,Bragança 2006.pdf
+Bragança,2006,Bragança,95,4,23,102,129,4.2,Bragança 2006.pdf
+Bragança,2006,Carrazeda Ansiães,12,1,2,13,16,8.3,Bragança 2006.pdf
+Bragança,2006,Freixo Espada Cinta,10,0,0,15,15,0.0,Bragança 2006.pdf
+Bragança,2006,Macedo Cavaleiros,55,3,9,66,78,5.5,Bragança 2006.pdf
+Bragança,2006,Miranda do Douro,16,0,8,16,24,0.0,Bragança 2006.pdf
+Bragança,2006,Mirandela,77,4,13,129,146,5.2,Bragança 2006.pdf
+Bragança,2006,Mogadouro,37,4,6,38,48,10.8,Bragança 2006.pdf
+Bragança,2006,Torre de Moncorvo,25,2,1,33,36,8.0,Bragança 2006.pdf
+Bragança,2006,Vila Flor,20,2,2,25,29,10.0,Bragança 2006.pdf
+Bragança,2006,Vimioso,8,0,2,9,11,0.0,Bragança 2006.pdf
+Bragança,2006,Vinhais,22,3,5,22,30,13.6,Bragança 2006.pdf
 Castelo Branco,2006,Belmonte,21,1,6,25,32,4.8,Castelo Branco 2006.pdf
 Castelo Branco,2006,Castelo Branco,173,2,34,212,248,1.2,Castelo Branco 2006.pdf
 Castelo Branco,2006,Covilhã,167,3,14,201,218,1.8,Castelo Branco 2006.pdf
@@ -866,12 +878,18 @@ Braga,2007,Vieira do Minho,45,1,7,50,58,2.2,Braga 2007.pdf
 Braga,2007,V. N. Famalicão,459,7,21,611,639,1.5,Braga 2007.pdf
 Braga,2007,Vila Verde,171,5,9,213,227,2.9,Braga 2007.pdf
 Braga,2007,Vizela,56,1,3,63,67,1.8,Braga 2007.pdf
-Bragança,2007,% % % % % grav. Alfandega da Fé,15,2,0,24,26,13.3,Bragança 2007.pdf
-Bragança,2007,Bragança Car. de Ansiães,10,2,1,10,13,20.0,Bragança 2007.pdf
-Bragança,2007,Freixo Esp. a Cinta M. de Cavaleiros,40,5,4,46,55,12.5,Bragança 2007.pdf
-Bragança,2007,Miranda do Douro Mirandela,82,0,4,107,111,0.0,Bragança 2007.pdf
-Bragança,2007,Mogadouro Torre de Moncorvo,24,2,6,23,31,8.3,Bragança 2007.pdf
-Bragança,2007,Vila Flor Vimioso,22,3,4,24,31,13.6,Bragança 2007.pdf
+Bragança,2007,Alfandega da Fé,15,2,0,24,26,13.3,Bragança 2007.pdf
+Bragança,2007,Bragança,97,6,23,112,141,6.2,Bragança 2007.pdf
+Bragança,2007,Car. de Ansiães,10,2,1,10,13,20.0,Bragança 2007.pdf
+Bragança,2007,Freixo Esp. a Cinta,14,0,4,15,19,0.0,Bragança 2007.pdf
+Bragança,2007,M. de Cavaleiros,40,5,4,46,55,12.5,Bragança 2007.pdf
+Bragança,2007,Miranda do Douro,9,2,5,6,13,22.2,Bragança 2007.pdf
+Bragança,2007,Mirandela,82,0,4,107,111,0.0,Bragança 2007.pdf
+Bragança,2007,Mogadouro,29,3,6,36,45,10.3,Bragança 2007.pdf
+Bragança,2007,Torre de Moncorvo,24,2,6,23,31,8.3,Bragança 2007.pdf
+Bragança,2007,Vila Flor,36,0,2,42,44,0.0,Bragança 2007.pdf
+Bragança,2007,Vimioso,22,3,4,24,31,13.6,Bragança 2007.pdf
+Bragança,2007,Vinhais,18,0,4,18,22,0.0,Bragança 2007.pdf
 Castelo Branco,2007,Belmonte,36,0,2,43,45,0.0,Castelo Branco 2007.pdf
 Castelo Branco,2007,Castelo Branco,184,6,44,202,252,3.3,Castelo Branco 2007.pdf
 Castelo Branco,2007,Covilhã,139,2,7,169,178,1.4,Castelo Branco 2007.pdf
@@ -1850,13 +1868,19 @@ Santarém,2011,Sardoal,11,0,1,14,15,0.0,Santarém 2011- vítimas a 30 dias.pdf
 Santarém,2011,Tomar,142,8,17,152,177,5.6,Santarém 2011- vítimas a 30 dias.pdf
 Santarém,2011,Torres Novas,116,2,5,152,159,1.7,Santarém 2011- vítimas a 30 dias.pdf
 Santarém,2011,V. N. da Barquinha,20,0,3,21,24,0.0,Santarém 2011- vítimas a 30 dias.pdf
-Setúbal,2011,% % % % % grav. Alcácer do Sal,93,6,24,129,159,6.5,Setúbal 2011- vítimas a 30 dias.pdf
-Setúbal,2011,Alcochete Almada,366,9,21,480,510,2.5,Setúbal 2011- vítimas a 30 dias.pdf
-Setúbal,2011,Barreiro Grândola,93,1,7,126,134,1.1,Setúbal 2011- vítimas a 30 dias.pdf
-Setúbal,2011,Moita Montijo,201,4,13,253,270,2.0,Setúbal 2011- vítimas a 30 dias.pdf
-Setúbal,2011,Palmela Santiago do Cacém,104,5,9,145,159,4.8,Setúbal 2011- vítimas a 30 dias.pdf
-Setúbal,2011,Seixal Sesimbra,112,3,6,139,148,2.7,Setúbal 2011- vítimas a 30 dias.pdf
-Setúbal,2011,Setúbal Sines,54,1,10,65,76,1.9,Setúbal 2011- vítimas a 30 dias.pdf
+Setúbal,2011,Alcácer do Sal,93,6,24,129,159,6.5,Setúbal 2011- vítimas a 30 dias.pdf
+Setúbal,2011,Alcochete,45,2,8,49,59,4.4,Setúbal 2011- vítimas a 30 dias.pdf
+Setúbal,2011,Almada,366,9,21,480,510,2.5,Setúbal 2011- vítimas a 30 dias.pdf
+Setúbal,2011,Barreiro,197,4,14,226,244,2.0,Setúbal 2011- vítimas a 30 dias.pdf
+Setúbal,2011,Grândola,93,1,7,126,134,1.1,Setúbal 2011- vítimas a 30 dias.pdf
+Setúbal,2011,Moita,122,4,8,139,151,3.3,Setúbal 2011- vítimas a 30 dias.pdf
+Setúbal,2011,Montijo,201,4,13,253,270,2.0,Setúbal 2011- vítimas a 30 dias.pdf
+Setúbal,2011,Palmela,248,8,17,334,359,3.2,Setúbal 2011- vítimas a 30 dias.pdf
+Setúbal,2011,Santiago do Cacém,104,5,9,145,159,4.8,Setúbal 2011- vítimas a 30 dias.pdf
+Setúbal,2011,Seixal,424,6,10,545,561,1.4,Setúbal 2011- vítimas a 30 dias.pdf
+Setúbal,2011,Sesimbra,112,3,6,139,148,2.7,Setúbal 2011- vítimas a 30 dias.pdf
+Setúbal,2011,Setúbal,334,10,12,408,430,3.0,Setúbal 2011- vítimas a 30 dias.pdf
+Setúbal,2011,Sines,54,1,10,65,76,1.9,Setúbal 2011- vítimas a 30 dias.pdf
 Vila Real,2011,Alijó,35,6,2,51,59,17.1,Vila Real 2011- vítimas a 30 dias.pdf
 Vila Real,2011,Boticas,9,0,0,11,11,0.0,Vila Real 2011- vítimas a 30 dias.pdf
 Vila Real,2011,Chaves,113,7,18,128,153,6.2,Vila Real 2011- vítimas a 30 dias.pdf

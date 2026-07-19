@@ -149,9 +149,17 @@ Chegar a esta cobertura exigiu três correções sucessivas:
   que uma linha de texto, mas os números ficam centrados verticalmente.
   Isto fazia com que ~30% das linhas desaparecessem silenciosamente
   (nem o fragmento de nome nem a linha de números batem com a regex
-  sozinhos). Resolvido com um passo de pré-processamento que deteta
-  linhas só-números encaixadas entre duas linhas sem dígitos e as
-  reconstrói antes do parse principal.
+  sozinhos). Há ainda uma segunda variante do mesmo problema, mais
+  traiçoeira: para nomes de 3+ palavras (ex. "Arruda dos Vinhos",
+  "Vila Franca de Xira"), o ÚLTIMO fragmento do nome cai na MESMA linha
+  que os números, e essa linha já bate certo sozinha com a regex — só
+  que com um nome errado e truncado ("Vinhos", "Xira"), sem nenhum
+  sinal de erro. `merge_wrapped_names` acumula todos os fragmentos de
+  texto (sem dígitos) vistos antes de uma linha de dados, filtrando
+  texto de cabeçalho pelo caminho, e só os liberta quando uma linha de
+  dados real aparece — isto recuperou mais 71 concelhos corretamente
+  nomeados no total (soma de todos os anos), sem regressões nos anos
+  já bem cobertos (ver taxas por ano na secção do mapa, abaixo).
 - Vários anos têm **dois ficheiros PDF não-"24h" para o mesmo
   distrito** (ex. `Aveiro 2015.pdf` e `Aveiro 2015 30d.pdf`) — sem
   deduplicação isto duplicava todas as linhas; o parser mantém só um
@@ -185,14 +193,19 @@ SVG estáticos por `build_concelhos_map.py`:
   ou com sufixos como "Lagoa (Algarve)") precisaram de um pequeno
   dicionário de aliases para bater certo com os nomes oficiais do CAOP.
   Isto cobre bem 2013 e 2015-2018 (277-278 de 278 concelhos casados
-  por ano). Para 2004-2009, 2011-2012 e 2014, a taxa de match é mais
-  baixa (220-251 de 278) — esses anos abreviam nomes de forma mais
-  agressiva (ex. "V. N. Famalicão", "P. de Lanhoso") ou têm nomes de
-  3+ palavras partidos em mais de duas linhas físicas no PDF, que o
-  `parser_distrito.py` só corrige para o caso de duas linhas. Os
-  concelhos sem match não aparecem no mapa para esse ano (ficam sem
-  cor, não errados) mas continuam presentes em
-  `sinistralidade_por_concelho.csv` com o nome tal como extraído.
+  por ano). Para os restantes, depois de generalizar
+  `merge_wrapped_names` para nomes de 3+ palavras (ver secção acima),
+  a taxa por ano é: 2004: 267/278, 2005: 232/278, 2006: 253/278,
+  2007: 248/278, 2008: 249/278, 2009: 247/278, 2011: 242/278,
+  2012: 251/278, 2014: 242/278. O que ainda falta nestes anos são,
+  sobretudo, abreviaturas genuínas no próprio texto do PDF (ex.
+  "V. N. Famalicão", "Miranda Douro" sem "de") que não têm forma de
+  ser reconstruídas a partir do texto disponível — precisariam de um
+  dicionário de aliases caso a caso, não perseguido mais além deste
+  ponto por retorno decrescente. Os concelhos sem match não aparecem
+  no mapa para esse ano (ficam sem cor, não errados) mas continuam
+  presentes em `sinistralidade_por_concelho.csv` com o nome tal como
+  extraído.
 - O ficheiro `ContinenteConcelhos.geojson` de origem (36,5 MB) não é
   versionado — só o `concelhos_map.json` já simplificado e embutido no
   HTML.

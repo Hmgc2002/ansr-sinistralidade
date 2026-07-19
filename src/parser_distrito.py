@@ -59,6 +59,11 @@ SECTION_END = "UTENTES"
 CONCELHO_HEADING = "segundo o concelho"
 NEXT_SECTION_HEADING = "Listagem dos acidentes"
 
+HEADER_NOISE_RE = re.compile(
+    r"acidentes|v[ií]timas|feridos|[íi]ndice|gravidade|^\s*%(\s+%)*\s*$",
+    re.IGNORECASE,
+)
+
 NUMBERS_ONLY_RE = re.compile(
     r"^(?P<acidentes>\d[\d.]*)\s+(?P<pct_acidentes>[\d,]+)\s+"
     r"(?P<mortais>\d[\d.]*)\s+(?P<pct_mortais>[\d,]+)\s+"
@@ -190,35 +195,90 @@ NON_CONCELHO_LABELS = re.compile(
 )
 
 
+def _join_name_fragments(parts: list[str]) -> str:
+    result = parts[0]
+    for part in parts[1:]:
+        result = f"{result}{'' if result.endswith('-') else ' '}{part}"
+    return result
+
+
 def merge_wrapped_names(lines: list[str]) -> list[str]:
-    """Some years (2004-2009 at least) wrap a two-word/hyphenated
-    concelho name across two physical lines, with the row's numbers
-    landing on the line IN BETWEEN — e.g. "Albergaria-a-" / <11 numbers>
-    / "Velha" — because the name cell is taller than one text line but
-    the numeric cells are vertically centered. A plain per-line regex
-    silently drops these rows entirely (neither the name fragments nor
-    the numbers-only line match ROW_RE). Detect a numbers-only line
-    sandwiched between two digit-free text lines and reassemble them
-    into one normal "name numbers" line before the main parse.
+    """Some years (2004-2009 at least) wrap a concelho name across
+    multiple physical lines because the name cell is taller than one
+    text line while the numeric cells stay vertically centered. This
+    shows up as (at least) two different physical patterns:
+
+    1. The numbers end up alone on their own line, sandwiched between
+       two name fragments: "Albergaria-a-" / <11 numbers> / "Velha".
+    2. A name PREFIX sits on its own line, and the LAST name fragment
+       lands on the same line as the numbers, so that line already
+       matches ROW_RE by itself, just with a wrong, truncated concelho
+       name: "Arruda" / "dos" / "Vinhos <11 numbers>" (parsed on its
+       own as concelho="Vinhos", silently dropping "Arruda dos"). This
+       second pattern is the more dangerous one: nothing fails to
+       match, so nothing here looks broken unless the resulting name is
+       checked against a known concelho list.
+
+    Both are handled by accumulating digit-free "pending" text lines
+    and attaching them as a prefix to whichever line eventually claims
+    the numbers — either a bare numbers-only line (pattern 1, where the
+    following line is then also consumed as the final fragment) or a
+    line that already parses as a full row (pattern 2, where the
+    pending prefix is prepended to its concelho name).
     """
     merged: list[str] = []
+    pending: list[str] = []
+    seen_first_row = False
     i = 0
     while i < len(lines):
         line = lines[i].strip()
-        prev = merged[-1].strip() if merged else ""
-        nxt = lines[i + 1].strip() if i + 1 < len(lines) else ""
-        if (
-            NUMBERS_ONLY_RE.match(line)
-            and prev
-            and not re.search(r"\d", prev)
-            and nxt
-            and not re.search(r"\d", nxt)
-        ):
-            merged[-1] = f"{prev}{'' if prev.endswith('-') else ' '}{nxt} {line}"
-            i += 2
-        else:
+
+        if not line or line.upper().startswith("TOTAL"):
+            pending = []
             merged.append(line)
             i += 1
+            continue
+
+        nxt = lines[i + 1].strip() if i + 1 < len(lines) else ""
+        if NUMBERS_ONLY_RE.match(line) and nxt and not re.search(r"\d", nxt):
+            # no seen_first_row gate needed here: pending can only ever
+            # contain real name fragments by this point (never header
+            # noise), since the accumulation step below already refuses
+            # to populate it before the first real row is seen
+            parts = (pending + [nxt]) if pending else [nxt]
+            merged.append(f"{_join_name_fragments(parts)} {line}")
+            pending = []
+            i += 2
+            continue
+
+        m = ROW_RE.match(line)
+        if m:
+            if pending:
+                new_concelho = _join_name_fragments(pending + [m.group("concelho")])
+                line = new_concelho + line[m.end("concelho"):]
+                pending = []
+            merged.append(line)
+            seen_first_row = True
+            i += 1
+            continue
+
+        if not re.search(r"\d", line):
+            # Column-header text is also digit-free and can span many
+            # lines of its own with short remnants ("de", "grav.") that
+            # don't contain any single recognizable keyword — rather
+            # than try to keyword-match every possible fragment, simply
+            # never accumulate pending text before the first real data
+            # row has been seen, so header noise can never get glued
+            # onto the first concelho in the table.
+            if seen_first_row and not HEADER_NOISE_RE.search(line):
+                pending.append(line)
+            else:
+                pending = []
+            i += 1
+            continue
+
+        merged.append(line)
+        i += 1
     return merged
 
 
