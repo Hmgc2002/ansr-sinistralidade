@@ -6,15 +6,17 @@ Two outputs:
    (data/processed/xlsx_tables_index.csv) mapping year/sheet_id -> table
    title, taken from each workbook's own 'Índice' sheet.
 2. Tidy time series: the "Sinistralidade em Portugal por mês" table found
-   in every annual workbook (2020-2024) is parsed into one long CSV
-   (data/processed/sinistralidade_mensal.csv) with columns:
-   report_year, month, month_num, acidentes_com_vitimas, vitimas_mortais,
-   feridos_graves, feridos_leves.
+   in every annual workbook (2020-2024) and the 2025 monthly report is
+   parsed into one long CSV (data/processed/sinistralidade_mensal.csv)
+   with columns: report_year, month, month_num, acidentes_com_vitimas,
+   vitimas_mortais, feridos_graves, feridos_leves.
 
-Note: the 2025 workbook uses a different, simpler monthly-report layout
-(sheet names '1'..'7' instead of '1.1'..'6.17') and is only handled by the
-raw dump, not the tidy monthly extraction — that report type needs its own
-parser once more monthly editions exist to confirm the layout is stable.
+Note: the 2025 workbook uses a different, simpler sheet layout (names
+like '1'..'7' and '4 e 5' instead of '1.1'..'6.17', combining what used
+to be separate Quadros into one sheet) and only has one edition so far
+(setembro) — the combined-sheet handling in `_find_monthly_sheet` is
+based on that single example and may need adjusting once more 2025
+editions appear.
 
 Usage:
     python src/parser_xlsx.py
@@ -106,6 +108,12 @@ def _find_monthly_sheet(wb: openpyxl.Workbook) -> str | None:
         if "por mês" in t and "sinistralidade em portugal" in t and "variação" not in t:
             if quadro_num in wb.sheetnames:
                 return quadro_num
+            # some workbooks (e.g. the 2025 monthly report) combine several
+            # "Quadro N" entries into one sheet named like "4 e 5" — match
+            # quadro_num against the sheet name's tokens instead of exact
+            for sheet_name in wb.sheetnames:
+                if quadro_num in re.split(r"\W+", sheet_name):
+                    return sheet_name
     return None
 
 
@@ -183,7 +191,7 @@ def main() -> None:
         print(f"A processar {year}: {path.name}")
         dump_raw_sheets(path, year, index_rows)
 
-        if year.isdigit() and 2020 <= int(year) <= 2024:
+        if year.isdigit() and 2020 <= int(year) <= 2025:
             extracted = extract_monthly_national(path, int(year))
             if extracted:
                 monthly_rows.extend(extracted)

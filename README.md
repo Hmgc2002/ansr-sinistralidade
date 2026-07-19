@@ -47,8 +47,10 @@ documentos** (PDF e Excel) entre 1999 e 2025:
 - **2020–2024**: relatório anual em PDF + um anexo `.xlsx` com ~60
   tabelas de dados por ano (quadros 1.1 a 6.17).
 - **2025**: passou a ter cadência mensal, com um layout de Excel mais
-  simples e ainda por confirmar como estável (só há uma edição, de
-  setembro, até à data).
+  simples (quadros combinados numa sheet só, ex. `'4 e 5'`). Já normalizado
+  na série mensal (ver abaixo); só há uma edição, de setembro, até à data,
+  por isso a deteção deste layout ainda não foi testada contra mais do
+  que um exemplo.
 
 Nota de qualidade dos dados da própria fonte: os nomes dos ficheiros têm
 inconsistências duplicadas (`Cópia de Cópia de Anexo...2024.xlsx`), e a
@@ -99,8 +101,9 @@ visível, não silenciosa — ver limitações).
 - `data/processed/xlsx_raw/<ano>/<quadro>.csv` — dump bruto de cada
   tabela, célula a célula, tal como está no Excel original.
 - `data/processed/sinistralidade_mensal.csv` — série mensal nacional
-  2020–2024 (60 linhas), já normalizada: `report_year, month, month_num,
-  acidentes_com_vitimas, vitimas_mortais, feridos_graves, feridos_leves`.
+  2020–2025 (69 linhas: 60 de 2020-2024 + 9 de 2025 até setembro), já
+  normalizada: `report_year, month, month_num, acidentes_com_vitimas,
+  vitimas_mortais, feridos_graves, feridos_leves`.
 - `data/processed/pdf_tables_index.csv` — índice de **4289 tabelas**
   extraídas dos 21 relatórios nacionais de 1999–2019 (ano, ficheiro de
   origem, página, índice da tabela na página, nº de linhas/colunas,
@@ -123,8 +126,10 @@ visível, não silenciosa — ver limitações).
 - pdfplumber também deteta ruído (tabelas de 1 linha/coluna vindas de
   gráficos ou blocos de texto) — o índice inclui tudo o que foi
   encontrado, sem filtrar por relevância.
-- O formato mensal de 2025 (`sheet '4 e 5'`) ainda não é normalizado —
-  só está no dump bruto do `parser_xlsx.py`.
+- O formato mensal de 2025 (`sheet '4 e 5'`) já está incluído na série
+  mensal, mas a deteção deste layout ("Quadros" combinados numa sheet,
+  ex. `'4 e 5'`) só foi validada contra um único ficheiro (setembro
+  2025) — vale a pena confirmar quando sair a próxima edição mensal.
 - Os anexos "24 horas" (2020–2024) ainda não são extraídos para a série
   mensal — só os "30 dias".
 - `xlsx_raw/` e `pdf_raw/` guardam cada tabela tal como está na fonte
