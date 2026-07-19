@@ -57,10 +57,15 @@ inconsistências duplicadas (`Cópia de Cópia de Anexo...2024.xlsx`), e a
 partir de pelo menos 2010 a ANSR publica **dois relatórios/anexos por
 ano com metodologias de contagem de vítimas mortais diferentes** — "24
 horas" (norma internacional) vs "30 dias" (norma tradicional
-portuguesa). Este projeto usa consistentemente a série "30 dias" em
-ambos os parsers, porque é a que aparece de forma mais consistente ao
-longo dos anos; isto deve ser tido em conta em qualquer comparação com
-estatísticas internacionais.
+portuguesa). `parser_pdf.py` usa sempre a variante "30 dias" (a mesma
+razão vale para os anos 1999-2019). Para os anexos `.xlsx` 2020+,
+`parser_xlsx.py` extrai **as duas**, mas em ficheiros separados, porque
+descobrimos que a diferença não é só de metodologia — a variante "24h"
+reporta **"Sinistralidade no Continente"** (exclui Açores/Madeira),
+enquanto a "30 dias" reporta **"Sinistralidade em Portugal"** (país
+inteiro). Ou seja, são duas séries com âmbito geográfico diferente, não
+só janela de contagem diferente — não devem ser comparadas diretamente
+sem ter isto em conta.
 
 ## Pontos Negros (troços perigosos)
 
@@ -100,10 +105,16 @@ visível, não silenciosa — ver limitações).
   do CSV correspondente).
 - `data/processed/xlsx_raw/<ano>/<quadro>.csv` — dump bruto de cada
   tabela, célula a célula, tal como está no Excel original.
-- `data/processed/sinistralidade_mensal.csv` — série mensal nacional
-  2020–2025 (69 linhas: 60 de 2020-2024 + 9 de 2025 até setembro), já
-  normalizada: `report_year, month, month_num, acidentes_com_vitimas,
+- `data/processed/sinistralidade_mensal.csv` — série mensal, âmbito
+  **Portugal** (país inteiro), metodologia "30 dias": 2020–2025 (69
+  linhas: 60 de 2020-2024 + 9 de 2025 até setembro). Colunas:
+  `report_year, scope, month, month_num, acidentes_com_vitimas,
   vitimas_mortais, feridos_graves, feridos_leves`.
+- `data/processed/sinistralidade_mensal_continente_24h.csv` — a mesma
+  estrutura, mas âmbito **Continente** (exclui Açores/Madeira),
+  metodologia "24h": só 2023–2024 (24 linhas) — é a única janela de anos
+  em que a ANSR publicou o anexo "24h" já com uma tabela mensal
+  equivalente à do anexo "30 dias".
 - `data/processed/pdf_tables_index.csv` — índice de **4289 tabelas**
   extraídas dos 21 relatórios nacionais de 1999–2019 (ano, ficheiro de
   origem, página, índice da tabela na página, nº de linhas/colunas,
@@ -130,8 +141,10 @@ visível, não silenciosa — ver limitações).
   mensal, mas a deteção deste layout ("Quadros" combinados numa sheet,
   ex. `'4 e 5'`) só foi validada contra um único ficheiro (setembro
   2025) — vale a pena confirmar quando sair a próxima edição mensal.
-- Os anexos "24 horas" (2020–2024) ainda não são extraídos para a série
-  mensal — só os "30 dias".
+- A série Continente/24h só tem 2023–2024: para 2020-2022 a ANSR só
+  publicou o anexo `.xlsx` "30 dias" (confirmado no manifesto — não há
+  um anexo "24h" em Excel para esses anos, só em PDF, que não é
+  processado por este parser).
 - `xlsx_raw/` e `pdf_raw/` guardam cada tabela tal como está na fonte
   (com cabeçalhos de várias linhas, células vazias, linhas de totais);
   útil para não perder informação, mas a maioria das tabelas ainda não

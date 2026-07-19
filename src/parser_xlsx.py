@@ -5,18 +5,23 @@ Two outputs:
    (data/processed/xlsx_raw/<year>/<sheet_id>.csv), plus a master index
    (data/processed/xlsx_tables_index.csv) mapping year/sheet_id -> table
    title, taken from each workbook's own 'Índice' sheet.
-2. Tidy time series: the "Sinistralidade em Portugal por mês" table found
-   in every annual workbook (2020-2024) and the 2025 monthly report is
-   parsed into one long CSV (data/processed/sinistralidade_mensal.csv)
-   with columns: report_year, month, month_num, acidentes_com_vitimas,
-   vitimas_mortais, feridos_graves, feridos_leves.
+2. Tidy time series, in two separate files because they are not the same
+   measurement:
+   - data/processed/sinistralidade_mensal.csv: the "Sinistralidade em
+     Portugal por mês" table (whole country, "30 dias" fatality count)
+     from every annual workbook (2020-2024) and the 2025 monthly report.
+   - data/processed/sinistralidade_mensal_continente_24h.csv: the
+     "Sinistralidade no Continente por mês" table found in the "24h"
+     annual workbooks (2023-2024) — mainland only (excludes Açores/
+     Madeira) AND a different fatality-count window (24h vs 30 dias).
+   Both have columns: report_year, scope, month, month_num,
+   acidentes_com_vitimas, vitimas_mortais, feridos_graves, feridos_leves.
 
-Note: the 2025 workbook uses a different, simpler sheet layout (names
-like '1'..'7' and '4 e 5' instead of '1.1'..'6.17', combining what used
-to be separate Quadros into one sheet) and only has one edition so far
-(setembro) — the combined-sheet handling in `_find_monthly_sheet` is
-based on that single example and may need adjusting once more 2025
-editions appear.
+Note: some workbooks (the 2025 monthly report, and the "24h" annual
+reports from 2023+) use a simpler sheet layout that combines what used
+to be separate Quadros into one sheet (e.g. '4 e 5' instead of separate
+'4' and '5' tabs) — `_find_monthly_sheet` handles this, but it's only
+been validated against the handful of files seen so far.
 
 Usage:
     python src/parser_xlsx.py
@@ -36,6 +41,7 @@ PROCESSED_DIR = ROOT / "data" / "processed"
 XLSX_RAW_OUT = PROCESSED_DIR / "xlsx_raw"
 INDEX_OUT = PROCESSED_DIR / "xlsx_tables_index.csv"
 MONTHLY_OUT = PROCESSED_DIR / "sinistralidade_mensal.csv"
+CONTINENTE_OUT = PROCESSED_DIR / "sinistralidade_mensal_continente_24h.csv"
 
 MONTHS_PT = {
     "jan": 1, "fev": 2, "mar": 3, "abr": 4, "mai": 5, "jun": 6,
@@ -102,24 +108,31 @@ def dump_raw_sheets(xlsx_path: Path, year: str, index_rows: list[dict]) -> None:
     wb.close()
 
 
-def _find_monthly_sheet(wb: openpyxl.Workbook) -> str | None:
+def _find_monthly_sheet(wb: openpyxl.Workbook, scope_phrase: str) -> str | None:
     for quadro_num, title in read_index(wb):
         t = title.lower()
-        if "por mês" in t and "sinistralidade em portugal" in t and "variação" not in t:
+        if "por mês" in t and scope_phrase in t and "variação" not in t:
             if quadro_num in wb.sheetnames:
                 return quadro_num
-            # some workbooks (e.g. the 2025 monthly report) combine several
-            # "Quadro N" entries into one sheet named like "4 e 5" — match
-            # quadro_num against the sheet name's tokens instead of exact
+            # some workbooks (e.g. the 2025 monthly report, and the "24h"
+            # annual reports) combine several "Quadro N" entries into one
+            # sheet named like "4 e 5" — match quadro_num against the sheet
+            # name's tokens instead of exact
             for sheet_name in wb.sheetnames:
                 if quadro_num in re.split(r"\W+", sheet_name):
                     return sheet_name
     return None
 
 
-def extract_monthly_national(xlsx_path: Path, report_year: int) -> list[dict]:
+def extract_monthly_series(xlsx_path: Path, report_year: int, scope_phrase: str, scope_label: str) -> list[dict]:
+    """scope_phrase selects the sheet ("sinistralidade em portugal" for the
+    "30 dias" reports, "sinistralidade no continente" for the "24h" ones —
+    these are two different geographic scopes, not just two fatality-count
+    methodologies: Continente excludes the Azores/Madeira). scope_label is
+    recorded on each output row so the two series are never conflated.
+    """
     wb = openpyxl.load_workbook(xlsx_path, data_only=True, read_only=True)
-    sheet_id = _find_monthly_sheet(wb)
+    sheet_id = _find_monthly_sheet(wb, scope_phrase)
     if not sheet_id:
         wb.close()
         return []
@@ -166,6 +179,7 @@ def extract_monthly_national(xlsx_path: Path, report_year: int) -> list[dict]:
         out.append(
             {
                 "report_year": report_year,
+                "scope": scope_label,
                 "month": month_label.strip(),
                 "month_num": month_num,
                 "acidentes_com_vitimas": row[col_for_group["AcV"]],
@@ -185,6 +199,7 @@ def main() -> None:
 
     index_rows: list[dict] = []
     monthly_rows: list[dict] = []
+    continente_rows: list[dict] = []
 
     for path in xlsx_files:
         year = path.parent.name
@@ -192,11 +207,17 @@ def main() -> None:
         dump_raw_sheets(path, year, index_rows)
 
         if year.isdigit() and 2020 <= int(year) <= 2025:
-            extracted = extract_monthly_national(path, int(year))
+            extracted = extract_monthly_series(path, int(year), "sinistralidade em portugal", "Portugal")
             if extracted:
                 monthly_rows.extend(extracted)
-                print(f"  -> {len(extracted)} meses extraídos para a série nacional")
-            else:
+                print(f"  -> {len(extracted)} meses (Portugal) extraídos para a série nacional")
+
+            extracted_cont = extract_monthly_series(path, int(year), "sinistralidade no continente", "Continente")
+            if extracted_cont:
+                continente_rows.extend(extracted_cont)
+                print(f"  -> {len(extracted_cont)} meses (Continente, 24h) extraídos")
+
+            if not extracted and not extracted_cont:
                 print(f"  -> aviso: não encontrei a tabela mensal neste ficheiro")
 
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
@@ -212,9 +233,17 @@ def main() -> None:
             writer = csv.DictWriter(f, fieldnames=list(monthly_rows[0].keys()))
             writer.writeheader()
             writer.writerows(monthly_rows)
-        print(f"{len(monthly_rows)} linhas na série mensal nacional -> {MONTHLY_OUT}")
+        print(f"{len(monthly_rows)} linhas na série mensal nacional (Portugal, 30 dias) -> {MONTHLY_OUT}")
     else:
         print("Aviso: nenhuma linha extraída para a série mensal nacional.", file=sys.stderr)
+
+    if continente_rows:
+        continente_rows.sort(key=lambda r: (r["report_year"], r["month_num"]))
+        with CONTINENTE_OUT.open("w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=list(continente_rows[0].keys()))
+            writer.writeheader()
+            writer.writerows(continente_rows)
+        print(f"{len(continente_rows)} linhas na série mensal Continente (24h) -> {CONTINENTE_OUT}")
 
 
 if __name__ == "__main__":
