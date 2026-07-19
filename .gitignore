@@ -4,3 +4,4 @@ __pycache__/
 data/raw/
 data/_debug_*.txt
 data/download_log.txt
+data/parser_pdf_log.txt

@@ -1,0 +1,18 @@
+"5. Veículos importados usados segundo
+a cilindrada",,,
+,,,
+Escalões em c.c.,,Nº de Veículos,
+,,,%
+Até 750 c.c.,Ligeiros,90,"0,2"
+De 751 a 1500 c.c.,Ligeiros,2789,"6,3"
+,Ligeiros,37903,
+De 1501 a 3750 c.c.,Pesados,72,
+,Sub-total,37975,"85,4"
+,Ligeiros,241,
+De 3751 a 6000 c.c.,Pesados,591,
+,Sub-total,832,"1,9"
+,Ligeiros,13,
+De 6001 a 8000 c.c.,Pesados,278,
+,Sub-total,291,"0,7"
+Mais de 8000 c.c.,Pesados,2494,"5,6"
+Total,,44471,"100,0"

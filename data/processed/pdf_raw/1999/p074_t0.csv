@@ -1,0 +1,17 @@
+Escalões em c.c.,Categoria de veículo,Nº de veículos,
+,,,%
+Até 750 c.c.,Ligeiros,65,"0,13"
+,,,
+De 751 a 1500 c.c.,Ligeiros,2.723,"5,53"
+,,,
+,Ligeiros,39.410,
+De 1501 a 3750 c.c.,Pesados,235,
+,Sub-total,39.645,"80,54"
+,Ligeiros,211,
+De 3751 a 6000 c.c.,Pesados,700,
+,Sub-total,911,"1,85"
+,Ligeiros,17,
+De 6001 a 8000 c.c.,Pesados,330,
+,Sub-total,347,"0,70"
+Mais de 8000 c.c.,Pesados,5.533,"11,24"
+Total,,49.224,
