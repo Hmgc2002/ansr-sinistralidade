@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+data/raw/
+data/_debug_*.txt
+data/download_log.txt
