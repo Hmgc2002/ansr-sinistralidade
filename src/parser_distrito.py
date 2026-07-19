@@ -10,10 +10,26 @@ handle — those years come back empty, not wrong.
 Every 2011+ district report contains ~10 tables sharing the exact same
 column header ("Acidentes Vítimas Feridos Feridos Total Índice de" /
 "c/ vítimas mortais graves leves vítimas gravidade") for different
-breakdowns (by month, weekday, light conditions, ...). The concelho
-(municipality) breakdown is consistently the LAST such table before the
-"UTENTES" section begins, so that ordering — not the heading text, which
-can be split awkwardly across a page break — is used to find it.
+breakdowns (by month, weekday, light conditions, ...). In 2013+, the
+concelho (municipality) breakdown is consistently the LAST such table
+before the "UTENTES" section begins, so that ordering — not the heading
+text, which can be split awkwardly across a page break — is used to
+find it (`_find_concelho_table_by_utentes`).
+
+2011-2012 don't repeat that column header once per table, so "the last
+occurrence before UTENTES" degenerates to "the only occurrence in the
+whole document" and spans several unrelated tables. For those two
+years, `_find_concelho_table_by_heading` anchors on the actual
+"... segundo o concelho" heading in the document body instead (distinct
+from its dotted table-of-contents entry earlier in the same document),
+ending at the next section, which is consistently "Listagem dos
+acidentes..." in every year checked. `find_concelho_rows` tries the
+UTENTES strategy first and only falls back to the heading strategy if
+the first candidate's rows fail the sanity check below — the UTENTES
+strategy can find *a* block in 2011-2012 without erroring (the shared
+header text happens to also appear once, elsewhere), it's just the
+wrong block, so falling back requires actually parsing and checking the
+rows, not just checking whether a block was found at all.
 
 Output: one row per (distrito, ano, concelho) with accident/victim
 counts, giving genuine municipality-level geographic granularity (unlike
@@ -40,6 +56,17 @@ OUT_PATH = ROOT / "data" / "processed" / "sinistralidade_por_concelho.csv"
 
 HEADER_ANCHOR = "vítimas mortais graves leves vítimas gravidade"
 SECTION_END = "UTENTES"
+CONCELHO_HEADING = "segundo o concelho"
+NEXT_SECTION_HEADING = "Listagem dos acidentes"
+
+NUMBERS_ONLY_RE = re.compile(
+    r"^(?P<acidentes>\d[\d.]*)\s+(?P<pct_acidentes>[\d,]+)\s+"
+    r"(?P<mortais>\d[\d.]*)\s+(?P<pct_mortais>[\d,]+)\s+"
+    r"(?P<graves>\d[\d.]*)\s+(?P<pct_graves>[\d,]+)\s+"
+    r"(?P<leves>\d[\d.]*)\s+(?P<pct_leves>[\d,]+)\s+"
+    r"(?P<total_vitimas>\d[\d.]*)\s+(?P<pct_total>[\d,]+)\s+"
+    r"(?P<indice>[\d,]+)$"
+)
 
 ROW_RE = re.compile(
     r"^(?P<concelho>.+?)\s+"
@@ -83,18 +110,9 @@ def find_district_and_year(path: Path) -> tuple[str, str] | tuple[None, None]:
     return district, folder_year
 
 
-def find_concelho_table(full_text: str) -> str | None:
-    """Returns the raw text block for the concelho table, or None.
-
-    Some years (2010-2012) don't have a "UTENTES" section at all — an
-    older report layout. Without that boundary there is no reliable way
-    to tell the concelho table apart from the several other tables that
-    share the exact same column header (by month, weekday, ...), so
-    those years are treated as not-found rather than guessed at: an
-    earlier version fell back to searching the whole document in this
-    case, which silently captured month/weekday/hour breakdown rows
-    mislabeled as "concelho" instead of raising an error.
-    """
+def _find_concelho_table_by_utentes(full_text: str) -> str | None:
+    """Primary strategy (2013+ layout): the concelho table is the LAST
+    occurrence of the shared column header before the "UTENTES" section."""
     utentes_idx = full_text.rfind(SECTION_END)
     if utentes_idx == -1:
         return None
@@ -104,6 +122,56 @@ def find_concelho_table(full_text: str) -> str | None:
         return None
     start = last_header_idx + len(HEADER_ANCHOR)
     return full_text[start:utentes_idx]
+
+
+def _find_concelho_table_by_heading(full_text: str) -> str | None:
+    """Fallback strategy (2011-2012 layout, no "UTENTES" section, and the
+    shared column header isn't repeated once per table so the primary
+    strategy can't tell tables apart). These years do still have the
+    actual "... segundo o concelho" heading in the document body — just
+    also, earlier, as a dotted table-of-contents entry. Take the LAST
+    occurrence that isn't immediately followed by TOC-style dot leaders,
+    and end at the next section (observed to consistently be "Listagem
+    dos acidentes..." in every year checked, whether or not a "UTENTES"
+    section exists in between elsewhere in the document)."""
+    idx = len(full_text)
+    body_idx = None
+    while True:
+        idx = full_text.lower().rfind(CONCELHO_HEADING, 0, idx)
+        if idx == -1:
+            break
+        following = full_text[idx + len(CONCELHO_HEADING): idx + len(CONCELHO_HEADING) + 15]
+        if "...." not in following:
+            body_idx = idx
+            break
+    if body_idx is None:
+        return None
+    start = body_idx + len(CONCELHO_HEADING)
+    end = full_text.find(NEXT_SECTION_HEADING, start)
+    if end == -1:
+        end = len(full_text)
+    return full_text[start:end]
+
+
+def find_concelho_rows(full_text: str) -> list[dict] | None:
+    """Tries the primary (UTENTES-anchored) strategy first, then the
+    heading-anchored fallback. Both candidate blocks are run all the way
+    through parse_concelho_rows (including its sanity check) before
+    deciding — the primary strategy can find A block without error even
+    in 2011-2012 (the header text happens to match once, elsewhere in
+    the document) and that block fails the sanity check rather than
+    coming back None, so the fallback must be tried whenever the first
+    candidate's *parsed rows* look wrong, not only when no block at all
+    was found.
+    """
+    for finder in (_find_concelho_table_by_utentes, _find_concelho_table_by_heading):
+        block = finder(full_text)
+        if block is None:
+            continue
+        rows = parse_concelho_rows(block)
+        if rows:
+            return rows
+    return None
 
 
 # If the exact HEADER_ANCHOR string happens to appear only once in a
@@ -122,10 +190,42 @@ NON_CONCELHO_LABELS = re.compile(
 )
 
 
+def merge_wrapped_names(lines: list[str]) -> list[str]:
+    """Some years (2004-2009 at least) wrap a two-word/hyphenated
+    concelho name across two physical lines, with the row's numbers
+    landing on the line IN BETWEEN — e.g. "Albergaria-a-" / <11 numbers>
+    / "Velha" — because the name cell is taller than one text line but
+    the numeric cells are vertically centered. A plain per-line regex
+    silently drops these rows entirely (neither the name fragments nor
+    the numbers-only line match ROW_RE). Detect a numbers-only line
+    sandwiched between two digit-free text lines and reassemble them
+    into one normal "name numbers" line before the main parse.
+    """
+    merged: list[str] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+        prev = merged[-1].strip() if merged else ""
+        nxt = lines[i + 1].strip() if i + 1 < len(lines) else ""
+        if (
+            NUMBERS_ONLY_RE.match(line)
+            and prev
+            and not re.search(r"\d", prev)
+            and nxt
+            and not re.search(r"\d", nxt)
+        ):
+            merged[-1] = f"{prev}{'' if prev.endswith('-') else ' '}{nxt} {line}"
+            i += 2
+        else:
+            merged.append(line)
+            i += 1
+    return merged
+
+
 def parse_concelho_rows(block: str) -> list[dict] | None:
     rows = []
     suspicious = 0
-    for line in block.splitlines():
+    for line in merge_wrapped_names(block.splitlines()):
         line = line.strip()
         if not line or line.upper().startswith("TOTAL"):
             continue
@@ -160,12 +260,8 @@ def process_pdf(path: Path) -> list[dict]:
     with pdfplumber.open(path) as pdf:
         full_text = "\n".join((p.extract_text() or "") for p in pdf.pages)
 
-    block = find_concelho_table(full_text)
-    if block is None:
-        return []
-
-    rows = parse_concelho_rows(block)
-    if rows is None:
+    rows = find_concelho_rows(full_text)
+    if not rows:
         return []
     for r in rows:
         r["distrito"] = distrito

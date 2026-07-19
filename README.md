@@ -112,25 +112,46 @@ do **concelho (município)**, ao contrário de tudo o resto neste projeto
 princípio, um mapa coroplético real: nomes de concelho fazem match
 direto com os limites administrativos oficiais.
 
-**Cobertura real: 2013 e 2015–2018 completos (18 distritos), 2014
-parcial (15 de 18 — faltam Castelo Branco, Viana do Castelo e Vila
-Real)**. Não é 2004-2018 como seria de esperar por haver PDFs para
-todos esses anos:
+**Cobertura real: 2004–2009 e 2011–2018, todos com 17-18 de 18
+distritos** (2014 é o mais incompleto, com 15/18 — faltam Castelo
+Branco, Viana do Castelo e Vila Real). Só falta **2010**, que usa um
+layout de tabela diferente ("Vítimas segundo o concelho", sem o
+prefixo "Acidentes e", com colunas 24h/30 dias lado a lado, sem secção
+"UTENTES") não suportado por este parser. A cobertura de 2004-2009 foi
+uma surpresa: inicialmente pensava-se (por analogia com 2010) que todo
+o intervalo 2004-2010 usava esse layout antigo, mas afinal só 2010 o
+usa — 2004-2009 já seguem o mesmo layout de 2013+.
 
-- **2004–2010**: layout diferente e mais antigo (tabela "Vítimas
-  segundo o concelho", sem o prefixo "Acidentes e", com colunas 24h/30
-  dias lado a lado, sem secção "UTENTES") — não suportado por este
-  parser.
-- **2011–2012**: têm o layout novo, mas o cabeçalho de coluna repetido
-  ("Acidentes Vítimas Feridos Feridos Total Índice de" / "c/ vítimas
-  mortais graves leves vítimas gravidade") só aparece **uma vez** no
-  documento nesses dois anos especificamente, em vez de uma vez por
-  tabela — sem essa repetição não há como distinguir a tabela de
-  concelho das ~9 outras tabelas com o mesmo cabeçalho (por mês, por dia
-  da semana, por hora do dia, ...) só pela posição. Uma validação de
-  sanidade deteta este caso (os "concelhos" extraídos seriam na
-  realidade nomes de mês/dia da semana) e descarta-o em vez de aceitar
-  dados errados.
+Chegar a esta cobertura exigiu três correções sucessivas:
+
+- **2011–2012**: o cabeçalho de coluna repetido ("Acidentes Vítimas
+  Feridos Feridos Total Índice de" / "c/ vítimas mortais graves leves
+  vítimas gravidade") só aparece **uma vez** no documento nesses dois
+  anos, em vez de uma vez por tabela — sem essa repetição não há como
+  distinguir a tabela de concelho das ~9 outras tabelas com o mesmo
+  cabeçalho (por mês, por dia da semana, por hora do dia, ...) só pela
+  posição. Resolvido com uma estratégia alternativa que ancora no
+  título real da secção ("... segundo o concelho", distinguindo-o da
+  entrada correspondente no índice, que tem pontos de preenchimento) e
+  termina na secção seguinte, que em todos os anos verificados é
+  sempre "Listagem dos acidentes com mortos e/ou feridos graves" —
+  válido mesmo em anos que também têm uma secção "UTENTES" para outro
+  efeito. A estratégia original (baseada em "UTENTES") não falha
+  claramente nestes dois anos — encontra *um* bloco sem erro (o
+  cabeçalho calha a aparecer uma vez, só que no sítio errado) — por
+  isso a fila de tentativas só avança para a alternativa depois de
+  reparar (via a validação de sanidade) que as linhas extraídas do
+  primeiro bloco não são concelhos a sério.
+- **2004–2009**: nomes de concelho com hífen ou compostos por duas
+  palavras (ex. "Albergaria-a-Velha") aparecem no PDF partidos em duas
+  linhas físicas, com os números da linha espremidos no meio (`
+  Albergaria-a-` / 11 números / `Velha`) — a célula do nome é mais alta
+  que uma linha de texto, mas os números ficam centrados verticalmente.
+  Isto fazia com que ~30% das linhas desaparecessem silenciosamente
+  (nem o fragmento de nome nem a linha de números batem com a regex
+  sozinhos). Resolvido com um passo de pré-processamento que deteta
+  linhas só-números encaixadas entre duas linhas sem dígitos e as
+  reconstrói antes do parse principal.
 - Vários anos têm **dois ficheiros PDF não-"24h" para o mesmo
   distrito** (ex. `Aveiro 2015.pdf` e `Aveiro 2015 30d.pdf`) — sem
   deduplicação isto duplicava todas as linhas; o parser mantém só um
@@ -163,6 +184,15 @@ SVG estáticos por `build_concelhos_map.py`:
 - Nomes de concelho do CSV (extraídos de PDF, por vezes sem "de"/"da"
   ou com sufixos como "Lagoa (Algarve)") precisaram de um pequeno
   dicionário de aliases para bater certo com os nomes oficiais do CAOP.
+  Isto cobre bem 2013 e 2015-2018 (277-278 de 278 concelhos casados
+  por ano). Para 2004-2009, 2011-2012 e 2014, a taxa de match é mais
+  baixa (220-251 de 278) — esses anos abreviam nomes de forma mais
+  agressiva (ex. "V. N. Famalicão", "P. de Lanhoso") ou têm nomes de
+  3+ palavras partidos em mais de duas linhas físicas no PDF, que o
+  `parser_distrito.py` só corrige para o caso de duas linhas. Os
+  concelhos sem match não aparecem no mapa para esse ano (ficam sem
+  cor, não errados) mas continuam presentes em
+  `sinistralidade_por_concelho.csv` com o nome tal como extraído.
 - O ficheiro `ContinenteConcelhos.geojson` de origem (36,5 MB) não é
   versionado — só o `concelhos_map.json` já simplificado e embutido no
   HTML.
@@ -196,9 +226,9 @@ SVG estáticos por `build_concelhos_map.py`:
 - `data/processed/pontos_negros.csv` — 82 registos de pontos negros (2019-2022):
   `year, entidade_gestora, estrada, km, relatorio_data,
   estado_intervencao` (ver secção "Pontos Negros" acima).
-- `data/processed/sinistralidade_por_concelho.csv` — 1631 registos
-  (distrito × ano × concelho), cobertura 2013/2015-2018 completa +
-  2014 parcial (ver secção acima): `distrito, ano, concelho,
+- `data/processed/sinistralidade_por_concelho.csv` — 3819 registos
+  (distrito × ano × concelho), cobertura 2004-2009 e 2011-2018 (ver
+  secção acima; só falta 2010): `distrito, ano, concelho,
   acidentes_com_vitimas, vitimas_mortais, feridos_graves, feridos_leves,
   total_vitimas, indice_gravidade, source_file`.
 - `data/processed/concelhos_map.json` — 278 concelhos com path SVG
