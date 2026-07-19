@@ -1,0 +1,346 @@
+<title>ANSR — Pontos Negros (2019–2022)</title>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page-plane:     #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --series-1:       #2a78d6; /* blue - categorical */
+    --status-good:     #0ca30c;
+    --status-warning:  #fab219;
+    --status-critical: #d03b3b;
+    --status-unknown:  #898781;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page-plane:     #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --series-1:       #3987e5;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --page-plane:     #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --baseline:       #383835;
+    --border:         rgba(255,255,255,0.10);
+    --series-1:       #3987e5;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page-plane);
+    color: var(--text-primary);
+  }
+  .viz-root { padding: 24px; max-width: 1120px; margin: 0 auto; }
+
+  header.page-header { margin-bottom: 20px; }
+  h1 { font-size: 1.5rem; margin: 0 0 6px; }
+  .subtitle { color: var(--text-secondary); font-size: 0.9rem; margin: 0 0 10px; max-width: 70ch; }
+  .caveat {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    max-width: 78ch;
+  }
+  .caveat strong { color: var(--text-primary); }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin: 20px 0;
+  }
+  .stat-tile {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .stat-tile .value {
+    font-size: 1.7rem;
+    font-weight: 600;
+    font-variant-numeric: proportional-nums;
+  }
+  .stat-tile .label { font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px; }
+
+  .chart-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 720px) { .chart-row { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .card h2 { font-size: 0.95rem; margin: 0 0 12px; font-weight: 600; }
+
+  .bar-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; position: relative; }
+  .bar-label { width: 150px; flex-shrink: 0; font-size: 0.8rem; color: var(--text-secondary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-track { flex: 1; height: 18px; position: relative; }
+  .bar-fill { height: 100%; border-radius: 4px; min-width: 4px; cursor: default; }
+  .bar-value { font-size: 0.78rem; color: var(--text-secondary); width: 34px; text-align: right;
+    font-variant-numeric: tabular-nums; flex-shrink: 0; }
+
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; font-size: 0.78rem; color: var(--text-secondary); }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+
+  .tooltip {
+    position: fixed;
+    pointer-events: none;
+    background: var(--text-primary);
+    color: var(--surface-1);
+    font-size: 0.75rem;
+    padding: 5px 8px;
+    border-radius: 6px;
+    display: none;
+    z-index: 10;
+    white-space: nowrap;
+  }
+
+  .filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 4px 0 14px;
+    align-items: center;
+  }
+  .filters input, .filters select {
+    font: inherit;
+    font-size: 0.85rem;
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface-1);
+    color: var(--text-primary);
+  }
+  .filters input { min-width: 200px; }
+  .result-count { font-size: 0.8rem; color: var(--text-muted); margin-left: auto; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  thead th {
+    text-align: left;
+    padding: 8px 10px;
+    color: var(--text-muted);
+    font-weight: 600;
+    border-bottom: 1px solid var(--baseline);
+    white-space: nowrap;
+  }
+  tbody td { padding: 8px 10px; border-bottom: 1px solid var(--gridline); vertical-align: top; }
+  tbody tr:hover { background: color-mix(in srgb, var(--series-1) 6%, transparent); }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.76rem;
+    white-space: nowrap;
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .table-wrap { overflow-x: auto; }
+  footer { margin-top: 20px; font-size: 0.75rem; color: var(--text-muted); }
+</style>
+
+<div class="viz-root">
+  <header class="page-header">
+    <h1>ANSR — Pontos Negros (2019–2022)</h1>
+    <p class="subtitle">Inspeções a troços rodoviários perigosos e recomendações de segurança às entidades gestoras das vias, extraídas dos relatórios PDF anuais da ANSR.</p>
+    <div class="caveat">
+      <strong>Sem geolocalização:</strong> estes pontos são identificados por estrada + quilómetro (ex. "A28, Km 3,5 a 3,6"), não por coordenadas GPS — não é possível colocá-los num mapa sem uma fonte adicional de geocodificação da rede rodoviária.
+      O texto livre de "Problemas identificados" e "Recomendações" foi descartado deliberadamente da extração (risco de atribuição incorreta entre estradas). Dataset não-oficial, extraído automaticamente — pode conter imprecisões.
+    </div>
+  </header>
+
+  <section class="stat-row" id="statRow"></section>
+
+  <section class="chart-row">
+    <div class="card">
+      <h2>Estado de intervenção</h2>
+      <div id="statusChart"></div>
+    </div>
+    <div class="card">
+      <h2>Pontos negros por ano</h2>
+      <div id="yearChart"></div>
+    </div>
+  </section>
+
+  <section class="card" style="margin-bottom:16px;">
+    <h2>Entidades gestoras com mais pontos negros</h2>
+    <div id="entityChart"></div>
+  </section>
+
+  <section class="card">
+    <h2>Todos os registos</h2>
+    <div class="filters">
+      <input type="search" id="searchInput" placeholder="Procurar estrada, entidade, km…">
+      <select id="yearFilter"><option value="">Todos os anos</option></select>
+      <select id="statusFilter"><option value="">Todos os estados</option></select>
+      <span class="result-count" id="resultCount"></span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Ano</th><th>Entidade Gestora</th><th>Estrada</th><th>Km</th><th>Data Relatório</th><th>Estado</th></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Fonte: ansr.pt/SegurancaRodoviaria/PontosNegrosRecomendacoes — dataset não-oficial, projeto <code>ansr-sinistralidade</code>. Não afiliado com a ANSR.
+  </footer>
+</div>
+<div class="tooltip" id="tooltip"></div>
+
+<script type="application/json" id="data-json">[{"year": "2019", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IC17", "km": "km 5,100 ao km 5,300", "relatorio_data": "25-03-2021", "estado_intervencao": "Implementadas"}, {"year": "2019", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 12", "km": "km 12,600 ao km 12,800", "relatorio_data": "29-04-2021", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2019", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 15", "km": "km 19,660 ao km 19,800", "relatorio_data": "09-04-2021", "estado_intervencao": "Implementadas"}, {"year": "2019", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 101", "km": "km 105,900 ao km 106,100", "relatorio_data": "20-04-2021", "estado_intervencao": "Implementadas"}, {"year": "2019", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 125", "km": "km 98,700 ao Km 98,900", "relatorio_data": "05-04-2021", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2019", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 222", "km": "km 5,300 ao km 5,500", "relatorio_data": "06-04-2021", "estado_intervencao": "Implementadas"}, {"year": "2019", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 12", "km": "km 4,300 ao Km 4,500", "relatorio_data": "12-05-2021", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2019", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 12", "km": "km 8,100 a km 8,300", "relatorio_data": "05-05-2021", "estado_intervencao": "Implementadas"}, {"year": "2019", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 1", "km": "km 288,650 ao km 288,850", "relatorio_data": "13-04-2021", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2019", "entidade_gestora": "Câmara Municipal de Vila Franca de Xira", "estrada": "EN 10", "km": "km 131,000 ao km 131,200", "relatorio_data": "", "estado_intervencao": "Não Implementadas"}, {"year": "2019", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 10", "km": "km 124,100 ao km 124,300", "relatorio_data": "26-02-2021", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2019", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 10", "km": "km 129,200 ao km 129,400", "relatorio_data": "19-03-2021", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2019", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 10", "km": "km 141,100 ao km 141,300", "relatorio_data": "22-03-2021", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2020", "entidade_gestora": "Brisa", "estrada": "A 1", "km": "Km 292,600 ao Km 292,700", "relatorio_data": "30.05.2022", "estado_intervencao": "Implementadas"}, {"year": "2020", "entidade_gestora": "Brisa", "estrada": "A 3", "km": "Km 16,300 ao Km 16,500", "relatorio_data": "30.05.2022", "estado_intervencao": "Não Implementadas"}, {"year": "2020", "entidade_gestora": "Brisa", "estrada": "A 5", "km": "Km 1,900 ao Km 2,100", "relatorio_data": "30.05.2022", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2020", "entidade_gestora": "Câmara Municipal de Lisboa", "estrada": "IC19", "km": "Km 0,100 ao 0,300", "relatorio_data": "30.05.2022", "estado_intervencao": "Não Implementadas"}, {"year": "2020", "entidade_gestora": "Câmara Municipal de Vila Franca de Xira", "estrada": "EN 10", "km": "Km 133,100 ao 133,300", "relatorio_data": "30.05.2022", "estado_intervencao": "Não Implementadas"}, {"year": "2020", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "A 20", "km": "Km 12,200 ao Km 12,400", "relatorio_data": "30.05.2022", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2020", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "A 20", "km": "Km 15,700 ao Km 15,900", "relatorio_data": "30.05.2022", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2020", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "A 28", "km": "Km 1,400 ao Km 1,600", "relatorio_data": "13.06.2022", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2020", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 6", "km": "Km 7,000 ao Km 7,200", "relatorio_data": "03.05.2022", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2020", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 6", "km": "Km 8,700 ao Km 8,800", "relatorio_data": "03.05.2022", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2020", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 10", "km": "Km 128,300 ao Km 128,500", "relatorio_data": "13.06.2022", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2020", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 12", "km": "Km 8,000 ao Km 8,200", "relatorio_data": "13.06.2022", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2020", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 15", "km": "Km 52,570 ao Km 52,600", "relatorio_data": "13.06.2022", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2020", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 206", "km": "Km 26.480 ao 26,650", "relatorio_data": "13.06.2022", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2020", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 206", "km": "Km 29,500 ao 29,650", "relatorio_data": "13.06.2022", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2020", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 378", "km": "Km 8,850 ao 9,000", "relatorio_data": "20.05.2022", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2020", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IC 2", "km": "Km 191,200 ao 191,400", "relatorio_data": "30.05.2022", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2020", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IC 17", "km": "Km 9,000 ao 9,100", "relatorio_data": "03.05.2022", "estado_intervencao": "Implementadas"}, {"year": "2020", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IC 19", "km": "Km 15,900 ao 16,100", "relatorio_data": "03.05.2022", "estado_intervencao": "Implementadas"}, {"year": "2020", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IC 20", "km": "Km 1,600 ao 1,700", "relatorio_data": "03.05.2022", "estado_intervencao": "Implementadas"}, {"year": "2020", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IC 20", "km": "Km 2,250 ao 2,400", "relatorio_data": "03.05.2022", "estado_intervencao": "Implementadas"}, {"year": "2020", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IP 7", "km": "Km 9,000 ao 9,200", "relatorio_data": "03.05.2022", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2020", "entidade_gestora": "Lusoponte", "estrada": "A 2", "km": "Km 5,000 ao 5,200", "relatorio_data": "03.05.2022", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2021", "entidade_gestora": "Município Porto", "estrada": "A 28", "km": "Km 3,400 ao Km 3,600 Dec.", "relatorio_data": "NOV.2023", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2021", "entidade_gestora": "Município Porto", "estrada": "A 28", "km": "Km 4,000 ao Km 4,200", "relatorio_data": "NOV.2023", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2021", "entidade_gestora": "Brisa", "estrada": "A 1", "km": "Km 100,500 ao Km 100,640", "relatorio_data": "SET.2023", "estado_intervencao": "Implementadas"}, {"year": "2021", "entidade_gestora": "Lusoponte", "estrada": "A 2", "km": "Km 0,350 ao 0,500", "relatorio_data": "SET.2023", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2021", "entidade_gestora": "Lusoponte", "estrada": "A 2", "km": "Km 5,650 ao 5,850", "relatorio_data": "SET.2023", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2021", "entidade_gestora": "Lusoponte", "estrada": "A 2", "km": "Km 5,750 ao Km 5,950", "relatorio_data": "SET.2023", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2021", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "A 20", "km": "Km 12,100 ao Km 12,300", "relatorio_data": "NOV.2023", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2021", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "A 20", "km": "Km 15,700 ao Km 15,900", "relatorio_data": "NOV.2023", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2021", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 106", "km": "Km 25,000 ao Km 25,200", "relatorio_data": "NOV.2023", "estado_intervencao": "Sem necessidade de Implementação devido à realização da empreitada de “Requalificação da EN106, entre o km 24+804 e o km 25+338, com a execução de 2 rotundas, ao"}, {"year": "2021", "entidade_gestora": "", "estrada": "", "km": "", "relatorio_data": "", "estado_intervencao": "km 24+945 e ao km 25+222, e reformulação da atual geometria do entroncamento de acesso à A4 ao km 25+040”,"}, {"year": "2021", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 109", "km": "Km 115,000 ao Km 115,200", "relatorio_data": "NOV.2023", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2021", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IC 2", "km": "Km 84,600 ao Km 84,800", "relatorio_data": "NOV.2023", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2021", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IC 17", "km": "Km 5,000 ao Km 5,200", "relatorio_data": "SET.2023", "estado_intervencao": "Não Implementadas"}, {"year": "2021", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IC 19", "km": "Km 0,150 ao Km 0,350", "relatorio_data": "NOV.2023", "estado_intervencao": "Não Implementadas"}, {"year": "2021", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IC 19", "km": "km 0.300 ao km 0,500", "relatorio_data": "SET2023", "estado_intervencao": "Não Implementadas"}, {"year": "2021", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IC 19", "km": "Km 5,200 ao km 5,400", "relatorio_data": "SET.2023", "estado_intervencao": "Não Implementadas"}, {"year": "2021", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IP 7", "km": "Km 7,100 ao km 7,300", "relatorio_data": "SET.2023", "estado_intervencao": "Não Implementadas"}, {"year": "2021", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IP 7", "km": "Km 7,400 Ao km 7,600", "relatorio_data": "SET.2023", "estado_intervencao": "Não Implementadas"}, {"year": "2021", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 6", "km": "Km 3,500 ao 3,600", "relatorio_data": "SET.2023", "estado_intervencao": "Não Implementadas"}, {"year": "2021", "entidade_gestora": "Infraestruturas de Portugal, SA E Câmara Municipal de Vila Franca de Xira", "estrada": "EN 10", "km": "Km 124,600 Ao km 124,800", "relatorio_data": "NOV.2023", "estado_intervencao": "Não Implementadas"}, {"year": "2021", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 10", "km": "Km 14,100 ao km 14,300", "relatorio_data": "SET.2023", "estado_intervencao": "Não Implementadas"}, {"year": "2022", "entidade_gestora": "Município Porto", "estrada": "A 28", "km": "Km 3,500 ao Km 3,600 Cres.", "relatorio_data": "08-08-2025", "estado_intervencao": "Não Implementadas"}, {"year": "2022", "entidade_gestora": "Concessão Norte Litoral", "estrada": "A 28", "km": "Km 6,200 ao Km 6,400 Dec.", "relatorio_data": "08-08-2025", "estado_intervencao": "Não Implementadas"}, {"year": "2022", "entidade_gestora": "Lusoponte", "estrada": "A 2", "km": "Km 2,900 ao 3,050 Cres.", "relatorio_data": "08-06-2025", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2022", "entidade_gestora": "Lusoponte", "estrada": "A 2", "km": "Km 5,550 ao 5,700 Dec.", "relatorio_data": "08-06-2025", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2022", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "A 20", "km": "Km 12,300 ao Km 12,500 Dec.", "relatorio_data": "08-08-2025", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2022", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "A 20", "km": "Km 12,400 ao Km 12,500 Cres.", "relatorio_data": "08-08-2025", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2022", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "A 20", "km": "Km 15,700 ao Km 15,900 Cres.", "relatorio_data": "08-08-2025", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2022", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 10", "km": "Km 128,340 ao Km 128,500", "relatorio_data": "08-06-2025", "estado_intervencao": "Não Implementadas"}, {"year": "2022", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 10", "km": "Km 128,700 ao Km 128,900", "relatorio_data": "08-06-2025", "estado_intervencao": "Não Implementadas"}, {"year": "2022", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 10", "km": "Km 139,100 ao Km 139,300", "relatorio_data": "08-06-2025", "estado_intervencao": "Não Implementadas"}, {"year": "2022", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 125", "km": "Km 115,900 ao Km 116,049", "relatorio_data": "08-08-2025", "estado_intervencao": "Não Implementadas"}, {"year": "2022", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 14", "km": "Km 20,600 ao Km 20,800", "relatorio_data": "08-08-2025", "estado_intervencao": "Não Implementadas"}, {"year": "2022", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN249-4", "km": "km 4,700 ao km 4,900", "relatorio_data": "08-06-2025", "estado_intervencao": "Não Implementadas"}, {"year": "2022", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 6", "km": "km 4.900 ao km 5,100", "relatorio_data": "08-06-2025", "estado_intervencao": "Não Implementadas"}, {"year": "2022", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "EN 9", "km": "Km 16,936 ao km 17,050", "relatorio_data": "08-06-2025", "estado_intervencao": "Não Implementadas"}, {"year": "2022", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IC 17", "km": "Km 4,900 ao km 5,100 Cres.", "relatorio_data": "08-06-2025", "estado_intervencao": "Não Implementadas"}, {"year": "2022", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IC 17", "km": "Km 5,200 Ao km 5,400 Cres.", "relatorio_data": "08-06-2025", "estado_intervencao": "Não Implementadas"}, {"year": "2022", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IC 17", "km": "Km 13,500 ao 13,700", "relatorio_data": "08-06-2025", "estado_intervencao": "Não Implementadas"}, {"year": "2022", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IC19", "km": "Km 3,800 ao 4,000 Dec.", "relatorio_data": "08-06-2025", "estado_intervencao": "Não Implementadas"}, {"year": "2022", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IC19", "km": "Km 6,000 ao 6,200 Dec.", "relatorio_data": "08-06-2025", "estado_intervencao": "Não Implementadas"}, {"year": "2022", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IC 19", "km": "Km 6,800 ao 7,000 Cres.", "relatorio_data": "08-06-2025", "estado_intervencao": "Não Implementadas"}, {"year": "2022", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IC 19", "km": "Km 7,800 ao 8,000 Dec.", "relatorio_data": "08-06-2025", "estado_intervencao": "Não Implementadas"}, {"year": "2022", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IC 19", "km": "Km 13,000 ao 13,200 Cres.", "relatorio_data": "08-06-2025", "estado_intervencao": "Não Implementadas"}, {"year": "2022", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IC 2", "km": "Km 190+400 ao 190+500 Dec.", "relatorio_data": "02-06-2025", "estado_intervencao": "Parcialmente implementadas"}, {"year": "2022", "entidade_gestora": "Infraestruturas de Portugal, SA", "estrada": "IP 7", "km": "Km 7,000 ao 7,200 Dec.", "relatorio_data": "08-06-2025", "estado_intervencao": "Não Implementadas"}]</script>
+<script>
+const DATA = JSON.parse(document.getElementById('data-json').textContent);
+
+const STATUS_COLORS = {
+  'Implementadas': 'var(--status-good)',
+  'Parcialmente implementadas': 'var(--status-warning)',
+  'Não Implementadas': 'var(--status-critical)',
+};
+function statusColor(s) { return STATUS_COLORS[s] || 'var(--status-unknown)'; }
+function statusLabel(s) { return s && STATUS_COLORS[s] ? s : 'Outro / incompleto'; }
+
+const tooltip = document.getElementById('tooltip');
+function showTip(e, text) {
+  tooltip.textContent = text;
+  tooltip.style.display = 'block';
+  tooltip.style.left = (e.clientX + 12) + 'px';
+  tooltip.style.top = (e.clientY + 12) + 'px';
+}
+function hideTip() { tooltip.style.display = 'none'; }
+
+function renderBarChart(container, rows, colorFn) {
+  const max = Math.max(...rows.map(r => r.count), 1);
+  container.innerHTML = rows.map(r => `
+    <div class="bar-row">
+      <div class="bar-label" title="${r.label}">${r.label}</div>
+      <div class="bar-track">
+        <div class="bar-fill" data-tip="${r.label}: ${r.count}"
+             style="width:${(r.count / max * 100).toFixed(1)}%; background:${colorFn(r.label)}"></div>
+      </div>
+      <div class="bar-value">${r.count}</div>
+    </div>
+  `).join('');
+  container.querySelectorAll('.bar-fill').forEach(el => {
+    el.addEventListener('mousemove', e => showTip(e, el.dataset.tip));
+    el.addEventListener('mouseleave', hideTip);
+  });
+}
+
+function countBy(arr, keyFn) {
+  const m = new Map();
+  for (const item of arr) {
+    const k = keyFn(item);
+    m.set(k, (m.get(k) || 0) + 1);
+  }
+  return m;
+}
+
+// --- Stat tiles ---
+const total = DATA.length;
+const entidades = new Set(DATA.map(d => d.entidade_gestora).filter(Boolean)).size;
+const naoImpl = DATA.filter(d => d.estado_intervencao === 'Não Implementadas').length;
+const pctNao = total ? Math.round(naoImpl / total * 100) : 0;
+document.getElementById('statRow').innerHTML = `
+  <div class="stat-tile"><div class="value">${total}</div><div class="label">Pontos negros (2019–2022)</div></div>
+  <div class="stat-tile"><div class="value">${entidades}</div><div class="label">Entidades gestoras distintas</div></div>
+  <div class="stat-tile"><div class="value">${pctNao}%</div><div class="label">Ainda não implementadas</div></div>
+`;
+
+// --- Estado de intervenção chart ---
+const statusOrder = ['Implementadas', 'Parcialmente implementadas', 'Não Implementadas'];
+const statusCounts = countBy(DATA, d => statusLabel(d.estado_intervencao));
+const statusRows = [...statusOrder, ...([...statusCounts.keys()].filter(k => !statusOrder.includes(k)))]
+  .filter(k => statusCounts.has(k))
+  .map(k => ({ label: k, count: statusCounts.get(k) }));
+renderBarChart(document.getElementById('statusChart'), statusRows, statusColor);
+
+// --- Year chart ---
+const yearCounts = countBy(DATA, d => d.year);
+const yearRows = [...yearCounts.keys()].sort().map(y => ({ label: y, count: yearCounts.get(y) }));
+renderBarChart(document.getElementById('yearChart'), yearRows, () => 'var(--series-1)');
+
+// --- Entity chart (top 8) ---
+const entityCounts = countBy(DATA.filter(d => d.entidade_gestora), d => d.entidade_gestora);
+const entityRows = [...entityCounts.entries()]
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 8)
+  .map(([label, count]) => ({ label, count }));
+renderBarChart(document.getElementById('entityChart'), entityRows, () => 'var(--series-1)');
+
+// --- Table + filters ---
+const yearFilter = document.getElementById('yearFilter');
+const statusFilter = document.getElementById('statusFilter');
+[...yearCounts.keys()].sort().forEach(y => {
+  const o = document.createElement('option'); o.value = y; o.textContent = y; yearFilter.appendChild(o);
+});
+[...statusRows.map(r => r.label)].forEach(s => {
+  const o = document.createElement('option'); o.value = s; o.textContent = s; statusFilter.appendChild(o);
+});
+
+const tableBody = document.getElementById('tableBody');
+const searchInput = document.getElementById('searchInput');
+const resultCount = document.getElementById('resultCount');
+
+function renderTable() {
+  const q = searchInput.value.trim().toLowerCase();
+  const yf = yearFilter.value;
+  const sf = statusFilter.value;
+  const filtered = DATA.filter(d => {
+    if (yf && d.year !== yf) return false;
+    if (sf && statusLabel(d.estado_intervencao) !== sf) return false;
+    if (q) {
+      const hay = `${d.entidade_gestora} ${d.estrada} ${d.km}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  resultCount.textContent = `${filtered.length} de ${total} registos`;
+  tableBody.innerHTML = filtered.map(d => `
+    <tr>
+      <td>${d.year || ''}</td>
+      <td>${d.entidade_gestora || '<em style="color:var(--text-muted)">—</em>'}</td>
+      <td>${d.estrada || ''}</td>
+      <td>${d.km || ''}</td>
+      <td>${d.relatorio_data || ''}</td>
+      <td><span class="status-pill"><span class="status-dot" style="background:${statusColor(d.estado_intervencao)}"></span>${statusLabel(d.estado_intervencao)}</span></td>
+    </tr>
+  `).join('');
+}
+searchInput.addEventListener('input', renderTable);
+yearFilter.addEventListener('change', renderTable);
+statusFilter.addEventListener('change', renderTable);
+renderTable();
+</script>
