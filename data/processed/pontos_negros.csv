@@ -1,16 +1,17 @@
 year,entidade_gestora,estrada,km,relatorio_data,estado_intervencao
-2019,"de Portugal, SA de Portugal, SA",IC17 EN 12,"km 5,100 ao km 5,300 km 12,600 ao km 12,800",25-03-2021 29-04-2021,Implementadas Parcialmente implementadas
-2019,"de Portugal, SA",EN 15,"km 19,660 ao km 19,800",09-04-2021,Implementadas
-2019,"de Portugal, SA",EN 101,"km 105,900 ao km 106,100",20-04-2021,Implementadas
-2019,"de Portugal, SA",EN 125,"km 98,700 ao Km 98,900",05-04-2021,Parcialmente implementadas
-2019,"de Portugal, SA",EN 222,"km 5,300 ao km 5,500",06-04-2021,Implementadas
-2019,"de Portugal, SA",EN 12,"km 4,300 ao Km 4,500",12-05-2021,Parcialmente implementadas
-2019,"de Portugal, SA",EN 12,"km 8,100 a km 8,300",05-05-2021,Implementadas
-2019,"de Portugal, SA",EN 1,"km 288,650 ao km 288,850",13-04-2021,Parcialmente implementadas
-2019,Municipal Vila Franca de Xira,EN 10,"km 131,000 ao km 131,200",,Não Implementadas
-2019,"de Portugal, SA",EN 10,"km 124,100 ao km 124,300",26-02-2021,Parcialmente implementadas
-2019,"de Portugal, SA",EN 10,"km 129,200 ao km 129,400",19-03-2021,Parcialmente implementadas
-2019,"de Portugal, SA",EN 10,"km 141,100 ao km 141,300",22-03-2021,Parcialmente implementadas
+2019,"Infraestruturas de Portugal, SA",IC17,"km 5,100 ao km 5,300",25-03-2021,Implementadas
+2019,"Infraestruturas de Portugal, SA",EN 12,"km 12,600 ao km 12,800",29-04-2021,Parcialmente implementadas
+2019,"Infraestruturas de Portugal, SA",EN 15,"km 19,660 ao km 19,800",09-04-2021,Implementadas
+2019,"Infraestruturas de Portugal, SA",EN 101,"km 105,900 ao km 106,100",20-04-2021,Implementadas
+2019,"Infraestruturas de Portugal, SA",EN 125,"km 98,700 ao Km 98,900",05-04-2021,Parcialmente implementadas
+2019,"Infraestruturas de Portugal, SA",EN 222,"km 5,300 ao km 5,500",06-04-2021,Implementadas
+2019,"Infraestruturas de Portugal, SA",EN 12,"km 4,300 ao Km 4,500",12-05-2021,Parcialmente implementadas
+2019,"Infraestruturas de Portugal, SA",EN 12,"km 8,100 a km 8,300",05-05-2021,Implementadas
+2019,"Infraestruturas de Portugal, SA",EN 1,"km 288,650 ao km 288,850",13-04-2021,Parcialmente implementadas
+2019,Câmara Municipal de Vila Franca de Xira,EN 10,"km 131,000 ao km 131,200",,Não Implementadas
+2019,"Infraestruturas de Portugal, SA",EN 10,"km 124,100 ao km 124,300",26-02-2021,Parcialmente implementadas
+2019,"Infraestruturas de Portugal, SA",EN 10,"km 129,200 ao km 129,400",19-03-2021,Parcialmente implementadas
+2019,"Infraestruturas de Portugal, SA",EN 10,"km 141,100 ao km 141,300",22-03-2021,Parcialmente implementadas
 2020,Brisa,A 1,"Km 292,600 ao Km 292,700",30.05.2022,Implementadas
 2020,Brisa,A 3,"Km 16,300 ao Km 16,500",30.05.2022,Não Implementadas
 2020,Brisa,A 5,"Km 1,900 ao Km 2,100",30.05.2022,Parcialmente implementadas

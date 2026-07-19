@@ -36,7 +36,7 @@ OUT_PATH = ROOT / "data" / "processed" / "pontos_negros.csv"
 # whose range contains its x0. Anything outside these ranges (the
 # Problemas/Recomendações columns, x ~207-689) is ignored on purpose.
 BANDS = [
-    ("entidade", 20, 100),
+    ("entidade", 0, 100),
     ("estrada", 100, 150),
     ("km", 150, 205),
     ("data", 680, 720),
@@ -44,6 +44,7 @@ BANDS = [
 ]
 HEADER_ROW_MARGIN = 15  # pt past the 'Estrada' column header before real data starts
 NEW_RECORD_GAP = 25  # vertical gap (pt) that signals a new record, not a wrapped word
+LINE_TOLERANCE = 3  # pt: words within this of each other are "the same line"
 
 
 def _bucket(x0: float) -> str | None:
@@ -51,6 +52,23 @@ def _bucket(x0: float) -> str | None:
         if lo <= x0 < hi:
             return name
     return None
+
+
+def _group_into_lines(words: list[dict]) -> list[list[dict]]:
+    """Groups words into visual lines by top-coordinate proximity.
+
+    Decisions below act on a whole line at once — not word-by-word — so
+    that a new record's Entidade (the leftmost column, read first) can
+    never be appended to the previous record's buffer before the
+    same line's Estrada is seen and triggers a flush.
+    """
+    lines: list[list[dict]] = []
+    for w in sorted(words, key=lambda w: (w["top"], w["x0"])):
+        if lines and abs(w["top"] - lines[-1][0]["top"]) <= LINE_TOLERANCE:
+            lines[-1].append(w)
+        else:
+            lines.append([w])
+    return lines
 
 
 def extract_records(pdf_path: Path, year: str) -> list[dict]:
@@ -76,41 +94,44 @@ def extract_records(pdf_path: Path, year: str) -> list[dict]:
 
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
-            words = sorted(page.extract_words(), key=lambda w: (w["top"], w["x0"]))
+            words = page.extract_words()
             # the header row position (and thus where real data starts)
             # varies a lot per page: page 1 has a tall institutional
             # title block pushing it down, later pages don't. Anchor on
             # the literal 'Estrada' column header instead of a fixed cutoff.
             header_words = [w for w in words if w["text"] == "Estrada"]
             cutoff = (header_words[0]["top"] + HEADER_ROW_MARGIN) if header_words else 0
-            page_top_cursor: float | None = None  # top-coordinates reset per page
-            first_relevant_on_page = True
-            for w in words:
-                if w["top"] < cutoff:
-                    continue
-                band = _bucket(w["x0"])
-                if band is None:
-                    continue
-                if first_relevant_on_page and has_data:
+
+            relevant = [w for w in words if w["top"] >= cutoff and _bucket(w["x0"])]
+            lines = _group_into_lines(relevant)
+
+            page_top_cursor: float | None = None
+            first_line_on_page = True
+            for line in lines:
+                line_bands = {_bucket(w["x0"]) for w in line}
+                if first_line_on_page and has_data:
                     # a record's identity fields never span a page break in
-                    # this template, so the first relevant word on a new
+                    # this template, so the first relevant line on a new
                     # page always belongs to a different record than
                     # whatever is still buffered from the previous page
                     flush()
                 elif (
-                    band == "estrada"
+                    "estrada" in line_bands
                     and buf["estrada"]
                     and page_top_cursor is not None
-                    and w["top"] - page_top_cursor > NEW_RECORD_GAP
+                    and line[0]["top"] - page_top_cursor > NEW_RECORD_GAP
                 ):
-                    # a fresh Estrada value, after a real vertical gap on
-                    # the same page (not just the next word on the same
-                    # wrapped line), marks the start of a new record
+                    # this line carries a fresh Estrada value, after a real
+                    # vertical gap on the same page (not just the next
+                    # wrapped line of the same record) — flush BEFORE any
+                    # of this line's words (including Entidade) are added
                     flush()
-                buf[band].append(w["text"])
+                for w in sorted(line, key=lambda w: w["x0"]):
+                    band = _bucket(w["x0"])
+                    buf[band].append(w["text"])
                 has_data = True
-                page_top_cursor = w["top"]
-                first_relevant_on_page = False
+                page_top_cursor = line[0]["top"]
+                first_line_on_page = False
     flush()
     return records
 

@@ -85,8 +85,9 @@ Estrada, Km, Data do relatório, Estado de intervenção), **descartando
 deliberadamente** o texto livre de "Problemas identificados" e
 "Recomendações" — juntar esse texto ao registo certo revelou-se
 demasiado arriscado (risco de atribuir o problema de uma estrada a
-outra). Resultado: 81 registos (2019-2022), dos quais 1 ficou
-incompleto (falha visível, não silenciosa — ver limitações).
+outra). Resultado: 82 registos (2019-2022), dos quais 2 (a mesma
+entrada, partida por uma quebra de página) ficaram incompletos (falha
+visível, não silenciosa — ver limitações).
 
 ## Outputs gerados
 
@@ -107,7 +108,7 @@ incompleto (falha visível, não silenciosa — ver limitações).
 - `data/processed/pdf_raw/<ano>/p<página>_t<tabela>.csv` — dump bruto de
   cada tabela detetada pelo `pdfplumber`, célula a célula, tal como
   extraída do PDF (sem tentar interpretar o layout).
-- `data/processed/pontos_negros.csv` — 81 pontos negros (2019-2022):
+- `data/processed/pontos_negros.csv` — 82 registos de pontos negros (2019-2022):
   `year, entidade_gestora, estrada, km, relatorio_data,
   estado_intervencao` (ver secção "Pontos Negros" acima).
 
@@ -132,8 +133,12 @@ incompleto (falha visível, não silenciosa — ver limitações).
   tem uma versão "tidy" própria como a série mensal nacional.
 - `pontos_negros.csv` não tem geolocalização (ver secção acima) e não
   inclui o texto de "Problemas identificados"/"Recomendações" (descartado
-  deliberadamente por risco de atribuição incorreta). 1 dos 81 registos
-  (ano 2021) ficou incompleto — o campo `estado_intervencao` contém
-  texto residual em vez do estado real; fica visível no CSV para quem
-  quiser corrigir à mão ou filtrar. Só cobre 2019-2022 — não encontrei
-  PDFs "PN" para 2023+ na página da fonte à data da recolha.
+  deliberadamente por risco de atribuição incorreta). 2 dos 82 registos
+  (ano 2021, mesma entrada EN106) ficaram partidos em dois — essa entrada
+  tem um texto de estado invulgarmente longo (justificação em vez do
+  habitual "Implementadas"/"Não Implementadas") que atravessa uma quebra
+  de página, e a heurística "novo registo começa numa página nova" corta
+  o texto ao meio. Fica visível no CSV (uma linha com todos os campos de
+  identidade vazios) para quem quiser juntar à mão. Só cobre 2019-2022 —
+  não encontrei PDFs "PN" para 2023+ na página da fonte à data da
+  recolha.
