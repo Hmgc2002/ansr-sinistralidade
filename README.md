@@ -20,6 +20,7 @@ src/
   parser_pdf.py    # extrai tabelas dos relatórios nacionais em PDF (1999-2019)
   parser_pontos_negros.py  # extrai a lista de pontos negros (2019-2022) em PDF
   parser_distrito.py  # extrai sinistralidade por concelho dos relatórios por distrito
+  parser_listagem.py  # extrai a listagem de acidentes individuais (mortos/feridos graves) dos mesmos relatórios
   build_concelhos_map.py  # gera o mapa coroplético (simplifica o GeoJSON, cruza com o CSV)
 dashboard/
   pontos_negros.html      # dashboard filtrável dos pontos negros
@@ -38,6 +39,7 @@ data/
 .\.venv\Scripts\python.exe src\parser_pdf.py    # -> data/processed/pdf_raw/*, pdf_tables_index.csv (1999-2019)
 .\.venv\Scripts\python.exe src\parser_pontos_negros.py  # -> data/processed/pontos_negros.csv (requer PDFs em data/raw/pontos_negros/PN_<ano>.pdf)
 .\.venv\Scripts\python.exe src\parser_distrito.py  # -> data/processed/sinistralidade_por_concelho.csv (2011-2018, cobertura parcial)
+.\.venv\Scripts\python.exe src\parser_listagem.py  # -> data/processed/listagem_acidentes.csv (2004-2018 exceto 2010)
 .\.venv\Scripts\python.exe src\build_concelhos_map.py  # -> data/processed/concelhos_map.json (requer data/ContinenteConcelhos.geojson, ver secção do mapa)
 ```
 
@@ -165,6 +167,81 @@ Chegar a esta cobertura exigiu três correções sucessivas:
   deduplicação isto duplicava todas as linhas; o parser mantém só um
   ficheiro por (distrito, ano), preferindo o que tem "30" no nome.
 
+## Listagem de acidentes individuais
+
+Os mesmos relatórios PDF por distrito usados acima têm, como última
+secção, uma tabela ao nível do **acidente individual**: "Listagem dos
+acidentes com mortos e/ou feridos graves" — um registo por acidente,
+com concelho, data/hora, nº de mortos, nº de feridos graves, via, km e
+natureza (tipo de acidente, ex. "Despiste simples", "Colisão frontal").
+`parser_listagem.py` extrai isto para
+`data/processed/listagem_acidentes.csv`: **32488 registos, 2004-2018
+exceto 2010**.
+
+Ao contrário de `parser_distrito.py` (que trabalha sobre texto já
+extraído), este parser trabalha sobre as coordenadas (x, y) de cada
+palavra, porque duas coisas tornam a extração por texto pouco fiável
+aqui:
+
+- **Ordem das colunas e formato de data variam por ano**: 2011+ usa
+  ordem "Via Km" com datas `DD-MM-YYYY`; 2004-2010 usa ordem "Km Via"
+  com datas `YYYY:MM:DD`; 2008-2009 usa ainda um terceiro formato,
+  `YYYY-MM-DD`. Em vez de assumir um layout fixo, tanto a ordem das
+  colunas como o formato de data são detetados por página, a partir do
+  próprio cabeçalho dessa página.
+- **Campos de texto livre longos embrulham-se em várias linhas
+  físicas** (nome da via, ou descrição da natureza do acidente), mas o
+  renderizador do PDF mantém as outras células da mesma linha
+  (concelho, data, mortos, feridos graves) centradas verticalmente
+  contra a célula alta que embrulhou — por isso a linha com
+  concelho/data/mortos/feridos graves pode aparecer entre dois
+  fragmentos de texto embrulhado, não necessariamente como a primeira
+  linha do grupo. O parser agrupa palavras em linhas físicas por
+  posição vertical, identifica quais são início de registo (têm uma
+  data) e atribui cada linha de continuação ao registo mais próximo —
+  um parser ingénuo por linha de texto simples leria isto como lixo
+  sem sentido.
+
+Limitações conhecidas:
+
+- **2010 excluído por completo**, pela mesma razão que
+  `parser_distrito.py` já exclui este ano da tabela de concelho: aqui
+  a inconsistência é ainda mais direta — mesmo dentro do mesmo
+  ficheiro, algumas páginas usam o formato de data antigo (dois
+  pontos) com uma **terceira coluna numérica** que nenhum cabeçalho
+  documenta, enquanto outras páginas do mesmo ficheiro já usam o
+  formato novo (traço) com as duas colunas habituais. Sem uma forma de
+  linha única para tentar parsear, tratado como incompatível em vez de
+  forçado.
+- `2018/Lisboa 2018 30d.pdf` não tem esta secção — o próprio PDF fonte
+  tem um erro de geração ("Out of object memory") exatamente onde a
+  tabela deveria estar; falha da fonte, não do parser. Existe um
+  `Lisboa 2018 24h.pdf` com a secção completa, mas deliberadamente não
+  usado como reserva, para não misturar as duas metodologias de
+  contagem (24h vs 30 dias) dentro do mesmo ficheiro de saída.
+- `km` vazio em ~56% das linhas — esperado: só é preenchido quando o
+  acidente ocorre numa via com marco quilométrico (estradas nacionais/
+  municipais fora de povoações); acidentes em arruamentos urbanos não
+  têm km.
+- `natureza` vazio em ~1,9% das linhas — a maioria vem de um
+  artefacto de renderização específico de alguns relatórios de
+  2004/2011/2012, onde o texto aparece com cada letra como uma palavra
+  separada ("D e s p i s t e" em vez de "Despiste"), o que impede o
+  reconhecimento por palavra-chave usado para separar via/km/natureza.
+  Não perseguido mais além: corrigir exigiria fundir sequências de
+  tokens de letra única antes do resto do parsing, um risco
+  desproporcional para menos de 2% das linhas.
+- Dois registos têm contagens extremas de mortos/feridos graves
+  (Castelo Branco 2007: 13 mortos; Castelo Branco 2013: 11 mortos/12
+  feridos graves, ambos em autoestradas/itinerários complementares).
+  Em ambos os casos a extração é de um único token limpo, sem
+  ambiguidade posicional — não há forma de confirmar contra a fonte
+  original se refletem acidentes multi-vítimas genuinamente graves ou
+  um erro de publicação da própria ANSR, por isso ficam como estão.
+- Um fragmento de linha embrulhada que caia na página **seguinte**
+  (quebra de página a meio de um texto longo) não é ligado de volta ao
+  seu registo — caso raro, aceite como limitação.
+
 ## Mapa coroplético (dashboard/concelhos_map.html)
 
 Usa `sinistralidade_por_concelho.csv` para desenhar um mapa coroplético
@@ -248,6 +325,10 @@ SVG estáticos por `build_concelhos_map.py`:
   simplificado + os dados de `sinistralidade_por_concelho.csv` por ano,
   já cruzados por nome (ver secção do mapa acima); é o que está embutido
   em `dashboard/concelhos_map.html`.
+- `data/processed/listagem_acidentes.csv` — 32488 registos individuais
+  de acidentes com mortos/feridos graves, cobertura 2004-2018 exceto
+  2010 (ver secção acima): `distrito, ano, concelho, data, hora,
+  mortos, feridos_graves, via, km, natureza, source_file`.
 
 ## Limitações conhecidas / próximos passos
 

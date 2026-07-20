@@ -6,5 +6,6 @@ data/_debug_*.txt
 data/download_log.txt
 data/parser_pdf_log.txt
 data/parser_distrito_log.txt
+data/parser_listagem_log.txt
 data/build_map_log.txt
 data/ContinenteConcelhos.geojson
