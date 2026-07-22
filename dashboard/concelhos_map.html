@@ -87,9 +87,10 @@
 
   .top-list { list-style: none; margin: 0; padding: 0; }
   .top-list li {
-    display: flex; justify-content: space-between; gap: 8px; padding: 7px 0;
+    display: flex; justify-content: space-between; gap: 8px; padding: 7px 10px; margin: 0 -10px;
     border-bottom: 1px solid var(--gridline); font-size: 0.84rem;
   }
+  .top-list li:nth-child(even) { background: color-mix(in srgb, var(--text-primary) 5%, var(--surface-1)); }
   .top-list li:last-child { border-bottom: none; }
   .top-list .rank { color: var(--text-muted); width: 20px; flex-shrink: 0; }
   .top-list .name { flex: 1; }
