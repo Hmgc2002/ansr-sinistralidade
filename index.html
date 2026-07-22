@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ansr-sinistralidade — Dados de sinistralidade rodoviária em Portugal</title>
+<meta name="description" content="Dataset aberto e não-oficial de sinistralidade rodoviária em Portugal, construído a partir dos relatórios públicos da ANSR.">
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page-plane:     #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --series-1:       #2a78d6;
+    --series-2:       #eb6834;
+    --series-3:       #1baf7a;
+    --series-8:       #e34948;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page-plane:     #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --series-1:       #3987e5;
+      --series-2:       #d95926;
+      --series-3:       #199e70;
+      --series-8:       #e66767;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page-plane);
+    color: var(--text-primary);
+  }
+  .wrap { padding: 40px 24px 32px; max-width: 1080px; margin: 0 auto; }
+
+  header.hero { margin-bottom: 28px; }
+  .eyebrow { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; margin: 0 0 8px; }
+  h1 { font-size: 2rem; margin: 0 0 12px; line-height: 1.15; }
+  .lede { color: var(--text-secondary); font-size: 1.02rem; max-width: 68ch; margin: 0 0 16px; line-height: 1.55; }
+  .hero-links { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.85rem; font-weight: 600; text-decoration: none;
+    padding: 9px 16px; border-radius: 8px; border: 1px solid var(--border);
+    color: var(--text-primary); background: var(--surface-1);
+  }
+  .btn.primary { background: var(--series-1); color: #fff; border-color: transparent; }
+  .caveat {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    max-width: 78ch;
+  }
+  .caveat strong { color: var(--text-primary); }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin: 28px 0;
+  }
+  .stat-tile {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .stat-tile .value { font-size: 1.6rem; font-weight: 600; }
+  .stat-tile .label { font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px; }
+
+  section.block { margin: 36px 0; }
+  h2 { font-size: 1.15rem; margin: 0 0 4px; }
+  .block-sub { font-size: 0.88rem; color: var(--text-secondary); margin: 0 0 18px; max-width: 72ch; }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: border-color 0.15s ease;
+  }
+  .card:hover { border-color: var(--series-1); }
+  .card .icon { font-size: 1.6rem; }
+  .card h3 { font-size: 1rem; margin: 0; }
+  .card p { font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.5; }
+  .card .tag { font-size: 0.72rem; color: var(--text-muted); margin-top: auto; }
+
+  .data-list { display: flex; flex-direction: column; gap: 10px; }
+  .data-row {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 16px;
+  }
+  .data-row .meta { flex: 1; min-width: 0; }
+  .data-row .fname { font-family: ui-monospace, Consolas, monospace; font-size: 0.85rem; font-weight: 600; }
+  .data-row .fdesc { font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px; }
+  .data-row .dl {
+    flex-shrink: 0; font-size: 0.8rem; font-weight: 600; text-decoration: none;
+    color: var(--series-1); border: 1px solid var(--border); border-radius: 7px;
+    padding: 6px 12px; white-space: nowrap;
+  }
+  .data-row .dl:hover { border-color: var(--series-1); }
+
+  footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--gridline); font-size: 0.8rem; color: var(--text-muted); }
+  footer a { color: var(--text-secondary); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <p class="eyebrow">Dataset aberto · não-oficial</p>
+    <h1>Sinistralidade rodoviária em Portugal</h1>
+    <p class="lede">
+      A ANSR (Autoridade Nacional de Segurança Rodoviária) não disponibiliza os seus dados
+      em formato aberto ou API — apenas como PDFs e Excel avulsos numa página HTML. Este
+      projeto automatiza a recolha desses relatórios e normaliza o resultado em CSVs abertos
+      e dashboards interativos, para uso em análises, investigação ou outras aplicações.
+    </p>
+    <div class="hero-links">
+      <a class="btn primary" href="#dashboards">Ver dashboards</a>
+      <a class="btn" href="#dados">Descarregar dados</a>
+      <a class="btn" href="https://github.com/Hmgc2002/ansr-sinistralidade">Código-fonte no GitHub</a>
+    </div>
+    <div class="caveat">
+      <strong>Não afiliado com a ANSR.</strong> Todos os dados foram extraídos automaticamente
+      de documentos públicos do próprio site da ANSR — podem conter imprecisões de extração.
+      Ver o <a href="https://github.com/Hmgc2002/ansr-sinistralidade#readme">README</a> no
+      GitHub para a metodologia completa e limitações conhecidas de cada fonte.
+    </div>
+  </header>
+
+  <section class="stat-row">
+    <div class="stat-tile"><div class="value">1975–2025</div><div class="label">Anos cobertos (combinando fontes)</div></div>
+    <div class="stat-tile"><div class="value">32 488</div><div class="label">Acidentes individuais catalogados</div></div>
+    <div class="stat-tile"><div class="value">278</div><div class="label">Concelhos no mapa coroplético</div></div>
+    <div class="stat-tile"><div class="value">4</div><div class="label">Dashboards interativos</div></div>
+  </section>
+
+  <section class="block" id="dashboards">
+    <h2>Dashboards interativos</h2>
+    <p class="block-sub">Cada um funciona de forma autónoma, sem dependências externas — os dados estão embutidos na própria página.</p>
+    <div class="card-grid">
+      <a class="card" href="dashboard/serie_nacional.html">
+        <span class="icon">📉</span>
+        <h3>Tendências nacionais</h3>
+        <p>Histórico anual de vítimas mortais (1975–2019) combinado com a série mensal (2020–2025), incluindo a quebra do confinamento de 2020.</p>
+        <span class="tag">1975–2025 · nacional</span>
+      </a>
+      <a class="card" href="dashboard/concelhos_map.html">
+        <span class="icon">🗺️</span>
+        <h3>Mapa coroplético por concelho</h3>
+        <p>Acidentes, vítimas mortais, feridos e índice de gravidade por concelho, com seletor de ano e de indicador.</p>
+        <span class="tag">2004–2018 · 278 concelhos</span>
+      </a>
+      <a class="card" href="dashboard/listagem.html">
+        <span class="icon">🚗</span>
+        <h3>Acidentes individuais</h3>
+        <p>32 488 registos de acidentes com mortos ou feridos graves: evolução anual, hora do dia, dia da semana, tipo de acidente.</p>
+        <span class="tag">2004–2018 (exc. 2010)</span>
+      </a>
+      <a class="card" href="dashboard/pontos_negros.html">
+        <span class="icon">⚠️</span>
+        <h3>Pontos negros</h3>
+        <p>Troços rodoviários perigosos inspecionados pela ANSR e o estado de implementação das recomendações de segurança.</p>
+        <span class="tag">2019–2022</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="block" id="dados">
+    <h2>Descarregar os dados</h2>
+    <p class="block-sub">CSVs normalizados, prontos a usar. Ver o README no GitHub para o esquema completo de cada ficheiro e como foi extraído.</p>
+    <div class="data-list">
+      <div class="data-row">
+        <div class="meta"><div class="fname">serie_anual_nacional.csv</div><div class="fdesc">Série histórica nacional, 1975–2019, sem lacunas</div></div>
+        <a class="dl" href="data/processed/serie_anual_nacional.csv" download>Descarregar</a>
+      </div>
+      <div class="data-row">
+        <div class="meta"><div class="fname">sinistralidade_mensal.csv</div><div class="fdesc">Série mensal nacional, 2020–2025</div></div>
+        <a class="dl" href="data/processed/sinistralidade_mensal.csv" download>Descarregar</a>
+      </div>
+      <div class="data-row">
+        <div class="meta"><div class="fname">listagem_acidentes.csv</div><div class="fdesc">32 488 registos individuais de acidentes com mortos/feridos graves, 2004–2018</div></div>
+        <a class="dl" href="data/processed/listagem_acidentes.csv" download>Descarregar</a>
+      </div>
+      <div class="data-row">
+        <div class="meta"><div class="fname">sinistralidade_por_concelho.csv</div><div class="fdesc">Acidentes e vítimas por concelho e ano, 2004–2018</div></div>
+        <a class="dl" href="data/processed/sinistralidade_por_concelho.csv" download>Descarregar</a>
+      </div>
+      <div class="data-row">
+        <div class="meta"><div class="fname">pontos_negros.csv</div><div class="fdesc">82 troços rodoviários perigosos inspecionados, 2019–2022</div></div>
+        <a class="dl" href="data/processed/pontos_negros.csv" download>Descarregar</a>
+      </div>
+      <div class="data-row">
+        <div class="meta"><div class="fname">manifest.csv</div><div class="fdesc">Catálogo de todos os 490 documentos publicados pela ANSR (1999–2025)</div></div>
+        <a class="dl" href="data/processed/manifest.csv" download>Descarregar</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Projeto <a href="https://github.com/Hmgc2002/ansr-sinistralidade">ansr-sinistralidade</a> —
+    dados extraídos de <a href="https://www.ansr.pt/Estatisticas/RelatoriosDeSinistralidade">ansr.pt</a>.
+    Dataset não-oficial, não afiliado com a ANSR. Código sob a licença indicada no repositório.
+  </footer>
+</div>
+</body>
+</html>
