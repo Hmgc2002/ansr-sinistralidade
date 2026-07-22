@@ -21,6 +21,7 @@ src/
   parser_pdf.py    # extrai tabelas dos relatórios nacionais em PDF (1999-2019)
   build_serie_anual_nacional.py  # extrai a série anual nacional 1975-2019 do dump do parser_pdf.py
   build_condutores_alcoolemia.py  # extrai a série de condutores testados por álcool, 1998-2004, do mesmo dump
+  build_frota_veiculos.py  # descarrega a frota nacional de veículos por ano (INE), 2010-2024
   parser_pontos_negros.py  # extrai a lista de pontos negros (2019-2022) em PDF
   geocode_pontos_negros.py  # estima lat/lon por estrada+km, cruzando com os marcos quilométricos da IP (SIGIP)
   parser_pontos_negros_resumo.py  # descarrega e normaliza o Excel de resumo anual (contagens nacionais, inclui 2023)
@@ -58,6 +59,7 @@ data/
 .\.venv\Scripts\python.exe src\build_populacao_concelhos.py  # -> data/processed/populacao_concelhos_2021.csv
 .\.venv\Scripts\python.exe src\build_concelhos_map.py  # -> data/processed/concelhos_map.json (requer data/ContinenteConcelhos.geojson e populacao_concelhos_2021.csv, ver secção do mapa)
 .\.venv\Scripts\python.exe src\build_listagem_dashboard_data.py  # -> data/processed/listagem_dashboard_data.json (dados agregados para dashboard/listagem.html)
+.\.venv\Scripts\python.exe src\build_frota_veiculos.py  # -> data/processed/frota_veiculos.csv (correr antes de build_serie_nacional_dashboard_data.py)
 .\.venv\Scripts\python.exe src\build_serie_nacional_dashboard_data.py  # -> data/processed/serie_nacional_dashboard_data.json (dados para dashboard/serie_nacional.html)
 ```
 
@@ -192,6 +194,21 @@ comparável às duas séries principais. `condutores_alcoolemia.csv`
 (1998-2004, ver secção "Condutores testados por álcool" abaixo) também
 é mostrada à parte, pela mesma razão — mais uma série curta e não
 comparável às outras.
+
+Uma quarta tabela, **"Acidentes por 1000 veículos" (2010-2024)**, junta
+`frota_veiculos.csv` (`build_frota_veiculos.py`, frota nacional de
+veículos motorizados, INE) aos acidentes/vítimas mortais desse ano —
+contagens brutas fazem os anos recentes parecerem sempre piores só por
+haver mais veículos na estrada, a mesma ideia da normalização por
+população no mapa de concelhos. Para 2010-2019 usa a própria série
+anual (já anual); para 2020-2024 soma os 12 meses de
+`sinistralidade_mensal.csv` (âmbito Portugal) por ano, para ficar na
+mesma granularidade anual que a frota — 2025 fica de fora porque nem o
+ano está completo nem o INE já publicou a frota desse ano. O resultado
+conta uma história mais matizada que os números brutos: acidentes por
+1000 veículos desce de 5,01 (2010) para ~4,3 (2019), cai a pique em
+2020 (3,32, efeito do confinamento) e sobe de novo desde então
+(3,62→3,95→4,17→4,14) — mas ainda abaixo do nível de 2019.
 
 `build_serie_nacional_dashboard_data.py` combina as duas fontes num só
 JSON (~15 KB) — pequeno o suficiente para não precisar de agregação
@@ -533,6 +550,9 @@ número exato.
   álcool, 1998-2004, 7 linhas (ver secção acima): `ano,
   total_condutores_intervenientes, total_testados, total_nao_testados,
   total_infratores, pct_testados, pct_infratores_entre_testados`.
+- `data/processed/frota_veiculos.csv` — frota nacional de veículos
+  motorizados por ano, 2010-2024, 15 linhas (INE, ver secção acima):
+  `ano, total_veiculos`.
 - `data/processed/pontos_negros.csv` — 81 registos de pontos negros (2019-2022):
   `year, entidade_gestora, estrada, km, relatorio_data,
   estado_intervencao, lat, lon, geocoding_precisao_km` — os últimos três
