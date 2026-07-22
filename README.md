@@ -175,9 +175,13 @@ Estrada, Km, Data do relatório, Estado de intervenção), **descartando
 deliberadamente** o texto livre de "Problemas identificados" e
 "Recomendações" — juntar esse texto ao registo certo revelou-se
 demasiado arriscado (risco de atribuir o problema de uma estrada a
-outra). Resultado: 82 registos (2019-2022), dos quais 2 (a mesma
-entrada, partida por uma quebra de página) ficaram incompletos (falha
-visível, não silenciosa — ver limitações).
+outra). Resultado: 81 registos (2019-2022). Uma entrada com um texto de
+estado invulgarmente longo (justificação em vez do habitual
+"Implementadas"/"Não Implementadas") chegou a ficar partida em dois
+pela heurística de quebra de página — corrigido detetando que a
+continuação não trazia nenhum campo de identidade (Entidade/Estrada)
+nas duas primeiras linhas da página nova, sinal de que era o mesmo
+registo a continuar, não um novo (ver `parser_pontos_negros.py`).
 
 ## Sinistralidade por concelho (relatórios de distrito)
 
@@ -417,7 +421,7 @@ SVG estáticos por `build_concelhos_map.py`:
   acidentes_com_vitimas, acidentes_com_mortos_ou_feridos_graves,
   acidentes_com_mortos, vitimas_mortais, feridos_graves, feridos_leves,
   total_feridos, indice_gravidade, source_report_year`.
-- `data/processed/pontos_negros.csv` — 82 registos de pontos negros (2019-2022):
+- `data/processed/pontos_negros.csv` — 81 registos de pontos negros (2019-2022):
   `year, entidade_gestora, estrada, km, relatorio_data,
   estado_intervencao` (ver secção "Pontos Negros" acima).
 - `data/processed/sinistralidade_por_concelho.csv` — 3819 registos
@@ -470,12 +474,12 @@ SVG estáticos por `build_concelhos_map.py`:
   tem uma versão "tidy" própria como a série mensal nacional.
 - `pontos_negros.csv` não tem geolocalização (ver secção acima) e não
   inclui o texto de "Problemas identificados"/"Recomendações" (descartado
-  deliberadamente por risco de atribuição incorreta). 2 dos 82 registos
-  (ano 2021, mesma entrada EN106) ficaram partidos em dois — essa entrada
-  tem um texto de estado invulgarmente longo (justificação em vez do
-  habitual "Implementadas"/"Não Implementadas") que atravessa uma quebra
-  de página, e a heurística "novo registo começa numa página nova" corta
-  o texto ao meio. Fica visível no CSV (uma linha com todos os campos de
-  identidade vazios) para quem quiser juntar à mão. Só cobre 2019-2022 —
-  não encontrei PDFs "PN" para 2023+ na página da fonte à data da
-  recolha.
+  deliberadamente por risco de atribuição incorreta). Só cobre 2019-2022
+  — reconfirmado em 2026-07-22 (re-scrape da página fonte): continua a só
+  existir PDF "PN" detalhado (por troço) para esses 4 anos. Existe, porém,
+  um novo ficheiro `.xlsx` de resumo ("PN JUN. 2026.xlsx", ainda não
+  integrado neste projeto) com contagens agregadas por ano — inclui já
+  2023 (40 pontos negros identificados), mas só ao nível de totais anuais
+  (Nº PN, Nº ISSR, recomendações emitidas/implementadas), não ao nível de
+  troço/estrada como o CSV atual — granularidade diferente, exigiria um
+  parser próprio.

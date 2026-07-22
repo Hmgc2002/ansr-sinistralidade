@@ -105,16 +105,32 @@ def extract_records(pdf_path: Path, year: str) -> list[dict]:
             relevant = [w for w in words if w["top"] >= cutoff and _bucket(w["x0"])]
             lines = _group_into_lines(relevant)
 
+            # A record's Estado value ("Não Implementadas", "Parcialmente
+            # implementadas") routinely wraps onto its own line before the
+            # Entidade cell of that same record appears — so Entidade can
+            # legitimately show up on the page's 2nd relevant line rather
+            # than its 1st. Only an unusually long "estado" free-text (a
+            # justification instead of the usual one/two-word status) pushes
+            # it past that — checking the first two lines instead of just
+            # the first is what tells a genuine new record (identity band
+            # nearby) apart from that free-text still wrapping across the
+            # page break (no identity band nearby, just more prose).
+            page_starts_new_record = any(
+                {_bucket(w["x0"]) for w in line} & {"entidade", "estrada"}
+                for line in lines[:2]
+            )
+
             page_top_cursor: float | None = None
             first_line_on_page = True
             for line in lines:
                 line_bands = {_bucket(w["x0"]) for w in line}
                 if first_line_on_page and has_data:
-                    # a record's identity fields never span a page break in
-                    # this template, so the first relevant line on a new
-                    # page always belongs to a different record than
-                    # whatever is still buffered from the previous page
-                    flush()
+                    # A record's identity fields (entidade/estrada) never
+                    # span a page break in this template, so a new page
+                    # that actually starts a new record always belongs to a
+                    # different record than whatever is still buffered.
+                    if page_starts_new_record:
+                        flush()
                 elif (
                     "estrada" in line_bands
                     and buf["estrada"]
