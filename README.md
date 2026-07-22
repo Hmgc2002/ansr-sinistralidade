@@ -448,9 +448,11 @@ SVG estáticos por `build_concelhos_map.py`:
 - As ~4289 tabelas de `pdf_raw/` **não estão normalizadas** — o layout
   varia significativamente ao longo de 21 anos de relatórios (agências e
   metodologias diferentes), pelo que forçar um esquema único seria
-  pouco fiável. Ficam como dump bruto pesquisável; extrair uma série
-  "tidy" (ex.: total nacional anual de acidentes/vítimas 1999-2019) é um
-  próximo passo natural, mas exige verificar a tabela certa caso a caso.
+  pouco fiável. Ficam como dump bruto pesquisável. Uma primeira série
+  "tidy" já foi extraída deste dump — a série anual nacional 1975-2019
+  (ver `build_serie_anual_nacional.py` e secção própria abaixo) — mas é
+  só uma tabela entre milhares; extrair outras séries recorrentes do
+  mesmo dump continua a ser um próximo passo natural, caso a caso.
 - pdfplumber também deteta ruído (tabelas de 1 linha/coluna vindas de
   gráficos ou blocos de texto) — o índice inclui tudo o que foi
   encontrado, sem filtrar por relevância.
