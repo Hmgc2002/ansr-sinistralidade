@@ -20,6 +20,7 @@
     --series-2:       #eb6834;
     --series-3:       #1baf7a;
     --series-8:       #e34948;
+    --accent:         #b87500; /* road-marking amber */
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -36,6 +37,7 @@
       --series-2:       #d95926;
       --series-3:       #199e70;
       --series-8:       #e66767;
+      --accent:         #f0b429;
     }
   }
 
@@ -48,8 +50,14 @@
   }
   .wrap { padding: 40px 24px 32px; max-width: 1080px; margin: 0 auto; }
 
-  header.hero { margin-bottom: 28px; }
-  .eyebrow { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; margin: 0 0 8px; }
+  header.hero { margin-bottom: 28px; padding-bottom: 22px; position: relative; }
+  header.hero::after {
+    content: '';
+    position: absolute; left: 0; bottom: 0; height: 3px; width: 100%;
+    background-image: repeating-linear-gradient(to right, var(--accent) 0 22px, transparent 22px 40px);
+    border-radius: 2px;
+  }
+  .eyebrow { font-size: 0.8rem; color: var(--accent); font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; margin: 0 0 8px; }
   h1 { font-size: 2rem; margin: 0 0 12px; line-height: 1.15; }
   .lede { color: var(--text-secondary); font-size: 1.02rem; max-width: 68ch; margin: 0 0 16px; line-height: 1.55; }
   .hero-links { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
@@ -80,10 +88,11 @@
   .stat-tile {
     background: var(--surface-1);
     border: 1px solid var(--border);
+    border-top: 3px solid var(--accent);
     border-radius: 10px;
     padding: 14px 16px;
   }
-  .stat-tile .value { font-size: 1.6rem; font-weight: 600; }
+  .stat-tile .value { font-size: 1.6rem; font-weight: 600; font-variant-numeric: tabular-nums; }
   .stat-tile .label { font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px; }
 
   section.block { margin: 36px 0; }
@@ -107,7 +116,7 @@
     gap: 8px;
     transition: border-color 0.15s ease;
   }
-  .card:hover { border-color: var(--series-1); }
+  .card:hover { border-color: var(--accent); }
   .card .icon { font-size: 1.6rem; }
   .card h3 { font-size: 1rem; margin: 0; }
   .card p { font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.5; }
