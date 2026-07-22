@@ -72,14 +72,23 @@ def dump_pdf_tables(path: Path, year: str, index_rows: list[dict]) -> int:
                 with out_path.open("w", newline="", encoding="utf-8") as f:
                     csv.writer(f).writerows(table)
                 preview = " | ".join(str(c) for c in table[0] if c)[:80]
+                n_rows = len(table)
+                n_cols = max(len(r) for r in table)
                 index_rows.append(
                     {
                         "year": year,
                         "source_file": path.name,
                         "page": page_num,
                         "table_index": t_idx,
-                        "rows": len(table),
-                        "cols": max(len(r) for r in table),
+                        "rows": n_rows,
+                        "cols": n_cols,
+                        # a 1-row or 1-column "table" is almost always a
+                        # chart axis/legend or a wrapped paragraph that
+                        # pdfplumber's grid detector mistook for tabular
+                        # data, not a flag to drop it — kept in the dump,
+                        # just marked so a search over the index can filter
+                        # it out
+                        "provavel_ruido": n_rows == 1 or n_cols == 1,
                         "csv_path": str(out_path.relative_to(ROOT)),
                         "first_row_preview": preview,
                     }

@@ -431,7 +431,10 @@ SVG estáticos por `build_concelhos_map.py`:
 - `data/processed/pdf_tables_index.csv` — índice de **4289 tabelas**
   extraídas dos 21 relatórios nacionais de 1999–2019 (ano, ficheiro de
   origem, página, índice da tabela na página, nº de linhas/colunas,
-  caminho do CSV, preview da primeira linha).
+  **`provavel_ruido`** (`True` se a tabela tem 1 linha ou 1 coluna — sinal
+  de vir de um gráfico/legenda ou de um bloco de texto que o `pdfplumber`
+  confundiu com uma tabela, não um critério para descartar; 1684 das 4289,
+  ~39%), caminho do CSV, preview da primeira linha).
 - `data/processed/pdf_raw/<ano>/p<página>_t<tabela>.csv` — dump bruto de
   cada tabela detetada pelo `pdfplumber`, célula a célula, tal como
   extraída do PDF (sem tentar interpretar o layout).
@@ -478,9 +481,12 @@ SVG estáticos por `build_concelhos_map.py`:
   (ver `build_serie_anual_nacional.py` e secção própria abaixo) — mas é
   só uma tabela entre milhares; extrair outras séries recorrentes do
   mesmo dump continua a ser um próximo passo natural, caso a caso.
-- pdfplumber também deteta ruído (tabelas de 1 linha/coluna vindas de
-  gráficos ou blocos de texto) — o índice inclui tudo o que foi
-  encontrado, sem filtrar por relevância.
+- ~~pdfplumber também deteta ruído... o índice inclui tudo, sem filtrar
+  por relevância~~ — resolvido: `pdf_tables_index.csv` tem agora a coluna
+  `provavel_ruido` (tabela de 1 linha ou 1 coluna, tipicamente um
+  gráfico/legenda ou um bloco de texto mal-detetado como tabela — 1684
+  das 4289, ~39%). Continua tudo no dump, só marcado — quem quiser
+  pesquisar só as tabelas "reais" filtra por `provavel_ruido == False`.
 - O formato mensal de 2025 (`sheet '4 e 5'`) já está incluído na série
   mensal, mas a deteção deste layout ("Quadros" combinados numa sheet,
   ex. `'4 e 5'`) só foi validada contra um único ficheiro (setembro
