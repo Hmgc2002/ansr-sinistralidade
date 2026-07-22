@@ -14,6 +14,18 @@ not a subtle one, so the derived metric is clearly labeled in the
 dashboard as approximate rather than presented alongside the others
 without comment.
 
+And joins in extensao_rede_distrito.csv (build_extensao_rede_distrito.py)
+to derive "acidentes por km de estrada" — a second, different kind of
+normalization: risk relative to how much road there is, not how many
+people live there. Unlike population, this is a genuine annual series
+(2007-2024) with no single-year approximation needed, but it's measured
+per **district**, not per concelho (INE doesn't publish network length
+at concelho granularity) — every concelho in a district shows the same
+district-wide rate, computed by summing that district's own concelhos'
+accidents for the year and dividing by that district's road-km. 2004-2006
+have no district road-km on record (the INE series starts 2007) and are
+left unnormalized rather than backfilled with a guess.
+
 The GeoJSON's coordinates are NOT lon/lat — despite being valid GeoJSON,
 this particular file stores them already projected into a Portuguese
 national grid (values like -20560.75, 113803.91 are meters, not
@@ -43,6 +55,7 @@ ROOT = Path(__file__).resolve().parent.parent
 GEOJSON_PATH = ROOT / "data" / "ContinenteConcelhos.geojson"
 CONCELHO_CSV = ROOT / "data" / "processed" / "sinistralidade_por_concelho.csv"
 POPULACAO_CSV = ROOT / "data" / "processed" / "populacao_concelhos_2021.csv"
+EXTENSAO_CSV = ROOT / "data" / "processed" / "extensao_rede_distrito.csv"
 OUT_PATH = ROOT / "data" / "processed" / "concelhos_map.json"
 
 SIMPLIFY_EPSILON_M = 400  # meters (native units of the source file); tune for size vs fidelity
@@ -112,6 +125,14 @@ def load_populacao() -> dict[str, int]:
         return {}
     with POPULACAO_CSV.open(encoding="utf-8") as f:
         return {normalize_name(row["concelho"]): int(row["populacao_residente_2021"]) for row in csv.DictReader(f)}
+
+
+def load_extensao_rede() -> dict[tuple[str, str], int]:
+    """Returns {(ano, normalized_distrito): extensao_km}."""
+    if not EXTENSAO_CSV.exists():
+        return {}
+    with EXTENSAO_CSV.open(encoding="utf-8") as f:
+        return {(row["ano"], normalize_name(row["distrito"])): int(row["extensao_km"]) for row in csv.DictReader(f)}
 
 
 def ring_to_points(ring: list) -> list[tuple[float, float]]:
@@ -188,6 +209,25 @@ def main() -> None:
                 "indice_gravidade": float(row["indice_gravidade"]),
                 "acidentes_por_100k_hab": round(acidentes_com_vitimas / pop * 100_000, 1) if pop else None,
             }
+
+    # acidentes por km de estrada — a district-wide rate (INE only
+    # publishes road length per district, not per concelho), so every
+    # concelho in a district gets the same value for that year: sum that
+    # district's own concelhos' accidents, divide by that district's km
+    extensao = load_extensao_rede()
+    for year, rows in matched_years.items():
+        district_accidents: dict[str, int] = {}
+        for norm, row in rows.items():
+            distrito = normalize_name(concelhos[norm]["distrito"])
+            district_accidents[distrito] = district_accidents.get(distrito, 0) + row["acidentes_com_vitimas"]
+        district_rate = {
+            distrito: round(total / extensao[(year, distrito)], 2)
+            for distrito, total in district_accidents.items()
+            if (year, distrito) in extensao
+        }
+        for norm, row in rows.items():
+            distrito = normalize_name(concelhos[norm]["distrito"])
+            row["acidentes_por_km_estrada_distrito"] = district_rate.get(distrito)
 
     if unmatched_geo:
         print(f"Aviso: {len(unmatched_geo)} linhas do CSV sem concelho correspondente no GeoJSON:")

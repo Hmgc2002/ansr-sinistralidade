@@ -28,7 +28,8 @@ src/
   parser_distrito.py  # extrai sinistralidade por concelho dos relatórios por distrito
   parser_listagem.py  # extrai a listagem de acidentes individuais (mortos/feridos graves) dos mesmos relatórios
   build_populacao_concelhos.py  # descarrega a população residente por concelho (Censos 2021, INE)
-  build_concelhos_map.py  # gera o mapa coroplético (simplifica o GeoJSON, cruza com o CSV e a população)
+  build_extensao_rede_distrito.py  # descarrega a extensão da rede rodoviária por distrito (INE/IMT), 2007-2024
+  build_concelhos_map.py  # gera o mapa coroplético (simplifica o GeoJSON, cruza com o CSV, a população e a extensão da rede)
   build_listagem_dashboard_data.py  # pré-agrega a listagem de acidentes individuais para o dashboard
   build_serie_nacional_dashboard_data.py  # combina a série anual e mensal nacional para o dashboard
 dashboard/
@@ -57,7 +58,8 @@ data/
 .\.venv\Scripts\python.exe src\parser_distrito.py  # -> data/processed/sinistralidade_por_concelho.csv (2011-2018, cobertura parcial)
 .\.venv\Scripts\python.exe src\parser_listagem.py  # -> data/processed/listagem_acidentes.csv (2004-2018 exceto 2010)
 .\.venv\Scripts\python.exe src\build_populacao_concelhos.py  # -> data/processed/populacao_concelhos_2021.csv
-.\.venv\Scripts\python.exe src\build_concelhos_map.py  # -> data/processed/concelhos_map.json (requer data/ContinenteConcelhos.geojson e populacao_concelhos_2021.csv, ver secção do mapa)
+.\.venv\Scripts\python.exe src\build_extensao_rede_distrito.py  # -> data/processed/extensao_rede_distrito.csv
+.\.venv\Scripts\python.exe src\build_concelhos_map.py  # -> data/processed/concelhos_map.json (requer data/ContinenteConcelhos.geojson, populacao_concelhos_2021.csv e extensao_rede_distrito.csv, ver secção do mapa)
 .\.venv\Scripts\python.exe src\build_listagem_dashboard_data.py  # -> data/processed/listagem_dashboard_data.json (dados agregados para dashboard/listagem.html)
 .\.venv\Scripts\python.exe src\build_frota_veiculos.py  # -> data/processed/frota_veiculos.csv (correr antes de build_serie_nacional_dashboard_data.py)
 .\.venv\Scripts\python.exe src\build_serie_nacional_dashboard_data.py  # -> data/processed/serie_nacional_dashboard_data.json (dados para dashboard/serie_nacional.html)
@@ -509,6 +511,30 @@ encolheu muito nesses 14 anos vai ter o indicador desviado na mesma
 direção do erro — mostrado no dashboard com esta ressalva, não como um
 número exato.
 
+Um segundo indicador, **"Acidentes por km de estrada (distrito)"**,
+normaliza de forma diferente: não por quanta gente vive ali, mas por
+quanta estrada existe — junta `extensao_rede_distrito.csv`
+(`build_extensao_rede_distrito.py`, extensão da rede rodoviária
+nacional por distrito, INE/IMT, 2007-2024). Ao contrário da população,
+esta é uma série anual genuína, sem aproximação de ano único — mas o
+INE só publica a extensão da rede ao nível de **distrito**, não de
+concelho, por isso todos os concelhos do mesmo distrito mostram o
+mesmo valor no ano (calculado a somar os acidentes de todos os
+concelhos desse distrito nesse ano e a dividir pelo km do distrito). O
+mapa fica visivelmente "em blocos" por distrito quando se seleciona
+este indicador — é o esperado, não um bug. 2004-2006 não têm extensão
+de rede na fonte (a série do INE só começa em 2007) e ficam sem cor
+para este indicador, em vez de reaproveitar um valor de outro ano. A
+fonte tem ainda duas quebras de metodologia documentadas pelo próprio
+INE: mudança de fonte de dados em 2010 (de "Estradas de Portugal, SA"
+para o IMT) e revisão dos critérios de classificação/contagem da rede
+em 2012 — mantidas como estão, não suavizadas.
+
+A lista "Top 10" adapta-se ao indicador selecionado: para os indicadores
+por concelho lista concelhos; para "Acidentes por km de estrada", como
+todos os concelhos do mesmo distrito têm o mesmo valor, lista distritos
+distintos em vez de repetir o mesmo distrito 10-18 vezes.
+
 ## Outputs gerados
 
 - `data/processed/manifest.csv` — catálogo de todos os 490 documentos
@@ -572,9 +598,14 @@ número exato.
 - `data/processed/populacao_concelhos_2021.csv` — população residente
   por concelho, Censos 2021 (INE), 278 linhas: `concelho, distrito,
   populacao_residente_2021`.
+- `data/processed/extensao_rede_distrito.csv` — extensão da rede
+  rodoviária nacional por distrito, 2007-2024, 324 linhas (INE/IMT, ver
+  secção do mapa acima): `ano, distrito, extensao_km`.
 - `data/processed/concelhos_map.json` — 278 concelhos com path SVG
   simplificado + os dados de `sinistralidade_por_concelho.csv` por ano
-  (incluindo `acidentes_por_100k_hab`, derivado da população acima), já
+  (incluindo `acidentes_por_100k_hab`, derivado da população, e
+  `acidentes_por_km_estrada_distrito`, derivado da extensão da rede —
+  ambos null quando não há a fonte correspondente para esse ano), já
   cruzados por nome (ver secção do mapa acima); é o que está embutido
   em `dashboard/concelhos_map.html`.
 - `data/processed/listagem_acidentes.csv` — 32488 registos individuais
