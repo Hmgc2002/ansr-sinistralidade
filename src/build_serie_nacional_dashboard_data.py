@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parent.parent
 ANUAL_PATH = ROOT / "data" / "processed" / "serie_anual_nacional.csv"
 MENSAL_PATH = ROOT / "data" / "processed" / "sinistralidade_mensal.csv"
 CONTINENTE_24H_PATH = ROOT / "data" / "processed" / "sinistralidade_mensal_continente_24h.csv"
+ALCOOLEMIA_PATH = ROOT / "data" / "processed" / "condutores_alcoolemia.csv"
 OUT_PATH = ROOT / "data" / "processed" / "serie_nacional_dashboard_data.json"
 
 MONTH_LABELS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
@@ -37,6 +38,7 @@ def main() -> None:
     anual = read_csv(ANUAL_PATH)
     mensal = read_csv(MENSAL_PATH)
     continente_24h = read_csv(CONTINENTE_24H_PATH)
+    alcoolemia = read_csv(ALCOOLEMIA_PATH)
 
     serie_anual = [
         {
@@ -79,11 +81,24 @@ def main() -> None:
         for r in continente_24h
     ]
 
+    serie_alcoolemia = [
+        {
+            "ano": r["ano"],
+            "total_condutores_intervenientes": int(r["total_condutores_intervenientes"]),
+            "total_testados": int(r["total_testados"]),
+            "total_infratores": int(r["total_infratores"]),
+            "pct_testados": float(r["pct_testados"]),
+            "pct_infratores_entre_testados": float(r["pct_infratores_entre_testados"]),
+        }
+        for r in alcoolemia
+    ]
+
     out = {
         "serie_anual": serie_anual,
         "serie_mensal": serie_mensal,
         "sazonalidade": sazonalidade,
         "serie_continente_24h": serie_continente_24h,
+        "serie_alcoolemia": serie_alcoolemia,
     }
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)

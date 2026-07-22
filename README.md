@@ -20,6 +20,7 @@ src/
   parser_continente_24h_pdf.py  # extrai a série Continente/24h de 2020-2022 dos PDFs (a ANSR só tem esses anos em Excel a partir de 2023)
   parser_pdf.py    # extrai tabelas dos relatórios nacionais em PDF (1999-2019)
   build_serie_anual_nacional.py  # extrai a série anual nacional 1975-2019 do dump do parser_pdf.py
+  build_condutores_alcoolemia.py  # extrai a série de condutores testados por álcool, 1998-2004, do mesmo dump
   parser_pontos_negros.py  # extrai a lista de pontos negros (2019-2022) em PDF
   geocode_pontos_negros.py  # estima lat/lon por estrada+km, cruzando com os marcos quilométricos da IP (SIGIP)
   parser_distrito.py  # extrai sinistralidade por concelho dos relatórios por distrito
@@ -46,6 +47,7 @@ data/
 .\.venv\Scripts\python.exe src\parser_continente_24h_pdf.py  # -> acrescenta 2020-2022 a sinistralidade_mensal_continente_24h.csv (requer os 3 PDFs "24h" em data/raw/<ano>/, correr depois de parser_xlsx.py)
 .\.venv\Scripts\python.exe src\parser_pdf.py    # -> data/processed/pdf_raw/*, pdf_tables_index.csv (1999-2019)
 .\.venv\Scripts\python.exe src\build_serie_anual_nacional.py  # -> data/processed/serie_anual_nacional.csv (requer pdf_tables_index.csv)
+.\.venv\Scripts\python.exe src\build_condutores_alcoolemia.py  # -> data/processed/condutores_alcoolemia.csv (requer os PDFs nacionais 1999-2004 em data/raw/<ano>/)
 .\.venv\Scripts\python.exe src\parser_pontos_negros.py  # -> data/processed/pontos_negros.csv (requer PDFs em data/raw/pontos_negros/PN_<ano>.pdf)
 .\.venv\Scripts\python.exe src\geocode_pontos_negros.py  # -> acrescenta lat/lon/geocoding_precisao_km a pontos_negros.csv (consulta o SIGIP da IP, precisa de rede; correr depois de parser_pontos_negros.py)
 .\.venv\Scripts\python.exe src\parser_distrito.py  # -> data/processed/sinistralidade_por_concelho.csv (2011-2018, cobertura parcial)
@@ -135,6 +137,42 @@ feridos graves" nem "feridos graves" vs. "feridos leves" — a própria
 ANSR não reportava essa distinção tão atrás no tempo, por isso ficam
 vazios (não é uma falha da extração).
 
+## Condutores testados por álcool (1998-2004)
+
+Uma segunda série "tidy" extraída do mesmo dump de PDFs nacionais, desta
+vez sem sorte de layout estável: os relatórios de 1999-2003 têm uma
+tabela "Condutores testados", discriminada por **tipo de veículo**
+(Ligeiros, Pesados, Motociclos, ...) × faixa de TAS, e cada edição
+acrescenta mais uma subdivisão de TAS que a anterior (uma coluna "TAS
+não definida" só aparece a partir da edição de 2002). O relatório de
+2004 substitui essa tabela por "5. Condutores segundo o teste de
+alcoolemia", discriminada por **gravidade da vítima** em vez de tipo de
+veículo — um cruzamento genuinamente diferente, não só uma reformatação
+— e que nem chega a ser detetado como tabela pelo `pdfplumber` (é lido
+diretamente do texto da página). De 2005 em diante o relatório deixa de
+publicar isto como tabela (passa a ser um parágrafo com uma percentagem,
+ou um gráfico) — a série para aí.
+
+Apesar da mudança de esquema, a linha de totais de ambas as eras reduz-se
+às mesmas quatro grandezas: condutores intervenientes, quantos foram
+testados, quantos desses testados estavam acima do limite legal (>= 0,5
+g/l), e por diferença, quantos não foram testados. `build_condutores_alcoolemia.py`
+extrai só isto — não as discriminações mais finas por tipo de veículo
+ou gravidade, que não partilham a mesma forma entre as duas eras.
+
+Cada edição mostra o ano corrente e o anterior lado a lado (a mesma
+sobreposição para conferência cruzada da série anual nacional); a
+edição mais recente é a usada quando um ano aparece em duas. Em quatro
+das cinco sobreposições (1999, 2000, 2002, 2003) os quatro números
+batem exatamente entre edições; a exceção é 2001, visto pela edição de
+2002: 330 condutores passam de implicitamente "testados, TAS abaixo do
+limite" para uma categoria explícita "TAS não definida" que a própria
+edição de 2001 não tinha — os condutores intervenientes e os infratores
+não mudam, só o total de testados desliza esses 330. Fica a figura mais
+recente, como em qualquer outra sobreposição, mas identificado aqui por
+ser uma revisão real, não ruído de extração (o script deteta e assinala
+isto sozinho ao correr — não é preciso confiar na descrição).
+
 ## Dashboard de tendências nacionais (dashboard/serie_nacional.html)
 
 Combina `serie_anual_nacional.csv` (1975-2019) e `sinistralidade_mensal.csv`
@@ -146,7 +184,10 @@ metade da média sazonal de ~2364 para abril, coincidindo com o
 confinamento geral). A série `sinistralidade_mensal_continente_24h.csv`
 (2020-2024, âmbito e metodologia diferentes — ver secção "O que existe
 na fonte") é mostrada à parte, como tabela, para não ser lida como
-comparável às duas séries principais.
+comparável às duas séries principais. `condutores_alcoolemia.csv`
+(1998-2004, ver secção "Condutores testados por álcool" abaixo) também
+é mostrada à parte, pela mesma razão — mais uma série curta e não
+comparável às outras.
 
 `build_serie_nacional_dashboard_data.py` combina as duas fontes num só
 JSON (~15 KB) — pequeno o suficiente para não precisar de agregação
@@ -443,6 +484,10 @@ SVG estáticos por `build_concelhos_map.py`:
   acidentes_com_vitimas, acidentes_com_mortos_ou_feridos_graves,
   acidentes_com_mortos, vitimas_mortais, feridos_graves, feridos_leves,
   total_feridos, indice_gravidade, source_report_year`.
+- `data/processed/condutores_alcoolemia.csv` — condutores testados por
+  álcool, 1998-2004, 7 linhas (ver secção acima): `ano,
+  total_condutores_intervenientes, total_testados, total_nao_testados,
+  total_infratores, pct_testados, pct_infratores_entre_testados`.
 - `data/processed/pontos_negros.csv` — 81 registos de pontos negros (2019-2022):
   `year, entidade_gestora, estrada, km, relatorio_data,
   estado_intervencao, lat, lon, geocoding_precisao_km` — os últimos três
@@ -476,11 +521,16 @@ SVG estáticos por `build_concelhos_map.py`:
 - As ~4289 tabelas de `pdf_raw/` **não estão normalizadas** — o layout
   varia significativamente ao longo de 21 anos de relatórios (agências e
   metodologias diferentes), pelo que forçar um esquema único seria
-  pouco fiável. Ficam como dump bruto pesquisável. Uma primeira série
-  "tidy" já foi extraída deste dump — a série anual nacional 1975-2019
-  (ver `build_serie_anual_nacional.py` e secção própria abaixo) — mas é
-  só uma tabela entre milhares; extrair outras séries recorrentes do
-  mesmo dump continua a ser um próximo passo natural, caso a caso.
+  pouco fiável. Ficam como dump bruto pesquisável. Duas séries "tidy" já
+  foram extraídas deste dump — a série anual nacional 1975-2019
+  (`build_serie_anual_nacional.py`) e os condutores testados por álcool
+  1998-2004 (`build_condutores_alcoolemia.py`, ver secção própria) — mas
+  são duas tabelas entre milhares, e a segunda mostra bem porque as
+  outras não são todas assim fáceis: só recorre de forma extraível por 6
+  anos, com uma mudança de esquema a meio. Extrair outras séries
+  recorrentes do mesmo dump continua a ser um próximo passo natural,
+  caso a caso — mas nem toda a tabela que recorre compensa o esforço de
+  reconciliar esquemas que mudam de edição para edição.
 - ~~pdfplumber também deteta ruído... o índice inclui tudo, sem filtrar
   por relevância~~ — resolvido: `pdf_tables_index.csv` tem agora a coluna
   `provavel_ruido` (tabela de 1 linha ou 1 coluna, tipicamente um
