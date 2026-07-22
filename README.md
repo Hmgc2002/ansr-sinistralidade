@@ -24,10 +24,12 @@ src/
   parser_listagem.py  # extrai a listagem de acidentes individuais (mortos/feridos graves) dos mesmos relatórios
   build_concelhos_map.py  # gera o mapa coroplético (simplifica o GeoJSON, cruza com o CSV)
   build_listagem_dashboard_data.py  # pré-agrega a listagem de acidentes individuais para o dashboard
+  build_serie_nacional_dashboard_data.py  # combina a série anual e mensal nacional para o dashboard
 dashboard/
   pontos_negros.html      # dashboard filtrável dos pontos negros
   concelhos_map.html      # mapa coroplético por concelho
   listagem.html           # dashboard da listagem de acidentes individuais
+  serie_nacional.html     # dashboard de tendências nacionais (anual + mensal)
 data/
   raw/             # ficheiros descarregados (não versionado, ~290 MB)
   processed/       # CSVs gerados (versionado)
@@ -46,6 +48,7 @@ data/
 .\.venv\Scripts\python.exe src\parser_listagem.py  # -> data/processed/listagem_acidentes.csv (2004-2018 exceto 2010)
 .\.venv\Scripts\python.exe src\build_concelhos_map.py  # -> data/processed/concelhos_map.json (requer data/ContinenteConcelhos.geojson, ver secção do mapa)
 .\.venv\Scripts\python.exe src\build_listagem_dashboard_data.py  # -> data/processed/listagem_dashboard_data.json (dados agregados para dashboard/listagem.html)
+.\.venv\Scripts\python.exe src\build_serie_nacional_dashboard_data.py  # -> data/processed/serie_nacional_dashboard_data.json (dados para dashboard/serie_nacional.html)
 ```
 
 ## O que existe na fonte (ANSR)
@@ -127,6 +130,25 @@ então). 1975-1986 não têm a distinção "acidentes com mortos e/ou
 feridos graves" nem "feridos graves" vs. "feridos leves" — a própria
 ANSR não reportava essa distinção tão atrás no tempo, por isso ficam
 vazios (não é uma falha da extração).
+
+## Dashboard de tendências nacionais (dashboard/serie_nacional.html)
+
+Combina `serie_anual_nacional.csv` (1975-2019) e `sinistralidade_mensal.csv`
+(2020-2025) num só dashboard: vítimas mortais por ano, índice de
+gravidade por ano, sazonalidade (média de acidentes por mês do ano,
+2020-2024), e a série mensal contínua 2020-2025 — que deixa visível a
+quebra de abril de 2020 (925 acidentes com vítimas nesse mês, menos de
+metade da média sazonal de ~2364 para abril, coincidindo com o
+confinamento geral). A série `sinistralidade_mensal_continente_24h.csv`
+(2023-2024, âmbito e metodologia diferentes — ver secção "O que existe
+na fonte") é mostrada à parte, como tabela, para não ser lida como
+comparável às duas séries principais.
+
+`build_serie_nacional_dashboard_data.py` combina as duas fontes num só
+JSON (~15 KB) — pequeno o suficiente para não precisar de agregação
+como o dashboard da listagem de acidentes individuais, mas mantido como
+passo de pipeline scriptado (e não embutido à mão) pela mesma razão de
+reprodutibilidade dos outros dashboards.
 
 ## Pontos Negros (troços perigosos)
 
@@ -415,6 +437,11 @@ SVG estáticos por `build_concelhos_map.py`:
   `listagem_acidentes.csv` (por ano, hora, dia da semana, tipo de
   acidente categorizado, distrito, top 20 mais graves), ~7,7 KB; é o
   que está embutido em `dashboard/listagem.html` (ver secção acima).
+- `data/processed/serie_nacional_dashboard_data.json` — combina
+  `serie_anual_nacional.csv` e `sinistralidade_mensal.csv` (mais a
+  sazonalidade mensal derivada e a série Continente/24h), ~15 KB; é o
+  que está embutido em `dashboard/serie_nacional.html` (ver secção
+  acima).
 
 ## Limitações conhecidas / próximos passos
 
