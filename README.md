@@ -18,6 +18,7 @@ src/
   downloader.py    # descarrega os ficheiros do manifesto (resumível)
   parser_xlsx.py   # normaliza os anexos .xlsx (2020-2025) em CSV
   parser_pdf.py    # extrai tabelas dos relatórios nacionais em PDF (1999-2019)
+  build_serie_anual_nacional.py  # extrai a série anual nacional 1975-2019 do dump do parser_pdf.py
   parser_pontos_negros.py  # extrai a lista de pontos negros (2019-2022) em PDF
   parser_distrito.py  # extrai sinistralidade por concelho dos relatórios por distrito
   parser_listagem.py  # extrai a listagem de acidentes individuais (mortos/feridos graves) dos mesmos relatórios
@@ -39,6 +40,7 @@ data/
 .\.venv\Scripts\python.exe src\downloader.py    # -> data/raw/<ano>/...
 .\.venv\Scripts\python.exe src\parser_xlsx.py   # -> data/processed/*.csv (2020-2025)
 .\.venv\Scripts\python.exe src\parser_pdf.py    # -> data/processed/pdf_raw/*, pdf_tables_index.csv (1999-2019)
+.\.venv\Scripts\python.exe src\build_serie_anual_nacional.py  # -> data/processed/serie_anual_nacional.csv (requer pdf_tables_index.csv)
 .\.venv\Scripts\python.exe src\parser_pontos_negros.py  # -> data/processed/pontos_negros.csv (requer PDFs em data/raw/pontos_negros/PN_<ano>.pdf)
 .\.venv\Scripts\python.exe src\parser_distrito.py  # -> data/processed/sinistralidade_por_concelho.csv (2011-2018, cobertura parcial)
 .\.venv\Scripts\python.exe src\parser_listagem.py  # -> data/processed/listagem_acidentes.csv (2004-2018 exceto 2010)
@@ -78,6 +80,53 @@ enquanto a "30 dias" reporta **"Sinistralidade em Portugal"** (país
 inteiro). Ou seja, são duas séries com âmbito geográfico diferente, não
 só janela de contagem diferente — não devem ser comparadas diretamente
 sem ter isto em conta.
+
+## Série anual nacional (1975-2019)
+
+As ~4289 tabelas em `pdf_raw/` (ver "Outputs gerados") não estão
+normalizadas, mas quase todos os 21 relatórios nacionais anuais
+incluem, perto do início, uma tabela com a série histórica de
+totais nacionais — não um retrato do próprio ano, mas uma janela
+retrospetiva de 10 a 25 anos que cresce uma linha a cada edição. Como
+essa janela se sobrepõe de edição para edição, quatro relatórios já
+cobrem 1975-2019 entre si, com sobreposição para conferência cruzada,
+sem ser preciso reconciliar o layout ligeiramente diferente de cada
+uma das 21 edições:
+
+- Relatório 1999: 1975-1999
+- Relatório 2009: 1990-2009
+- Relatório 2014: 2005-2014 (cobre 2010-2012, cujos próprios relatórios
+  usam um layout de tabela incompatível — o mesmo problema que já
+  levou `parser_distrito.py` a excluir esses anos ao nível de
+  concelho)
+- Relatório 2019: 2010-2019
+
+`build_serie_anual_nacional.py` percorre as tabelas de todas as 21
+edições à procura desta tabela recorrente (por palavras-chave no
+cabeçalho, robustas à variação de fraseologia ao longo dos anos:
+"Acidentes com mortos e/ou f. graves" nos anos 2000, abreviado para
+"AcVM ou AcFG" em 2019), e para cada ano usa a edição **mais recente**
+que o cobre. O layout de colunas é estável nas 21 edições apesar da
+fraseologia do cabeçalho mudar: ano, seguido de 7 pares (valor, %
+variação face ao ano anterior), terminando no índice de gravidade sem
+% (16 colunas).
+
+Uma complicação da extração: o `pdfplumber` às vezes deteta esta
+tabela como uma linha por ano (célula do ano = "2010"), mas outras
+vezes como a tabela inteira em 2-3 linhas em que cada célula é uma
+string só, com todos os anos separados por quebras de linha (sem
+linhas separadoras visíveis no PDF de origem para o `pdfplumber`
+distinguir as linhas) — ambos os formatos são tratados, o segundo
+detetado e reconstruído dividindo cada coluna por `\n` e recompondo
+linha a linha.
+
+**Cobertura: 1975-2019, sem lacunas.** Os números batem com o que é
+publicamente sabido sobre a sinistralidade rodoviária portuguesa (pico
+de vítimas mortais no início dos anos 90, declínio acentuado desde
+então). 1975-1986 não têm a distinção "acidentes com mortos e/ou
+feridos graves" nem "feridos graves" vs. "feridos leves" — a própria
+ANSR não reportava essa distinção tão atrás no tempo, por isso ficam
+vazios (não é uma falha da extração).
 
 ## Pontos Negros (troços perigosos)
 
@@ -341,6 +390,11 @@ SVG estáticos por `build_concelhos_map.py`:
 - `data/processed/pdf_raw/<ano>/p<página>_t<tabela>.csv` — dump bruto de
   cada tabela detetada pelo `pdfplumber`, célula a célula, tal como
   extraída do PDF (sem tentar interpretar o layout).
+- `data/processed/serie_anual_nacional.csv` — série histórica nacional,
+  1975-2019, sem lacunas (ver secção acima): `ano,
+  acidentes_com_vitimas, acidentes_com_mortos_ou_feridos_graves,
+  acidentes_com_mortos, vitimas_mortais, feridos_graves, feridos_leves,
+  total_feridos, indice_gravidade, source_report_year`.
 - `data/processed/pontos_negros.csv` — 82 registos de pontos negros (2019-2022):
   `year, entidade_gestora, estrada, km, relatorio_data,
   estado_intervencao` (ver secção "Pontos Negros" acima).
