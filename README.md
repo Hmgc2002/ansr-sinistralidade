@@ -26,7 +26,8 @@ src/
   parser_pontos_negros_resumo.py  # descarrega e normaliza o Excel de resumo anual (contagens nacionais, inclui 2023)
   parser_distrito.py  # extrai sinistralidade por concelho dos relatórios por distrito
   parser_listagem.py  # extrai a listagem de acidentes individuais (mortos/feridos graves) dos mesmos relatórios
-  build_concelhos_map.py  # gera o mapa coroplético (simplifica o GeoJSON, cruza com o CSV)
+  build_populacao_concelhos.py  # descarrega a população residente por concelho (Censos 2021, INE)
+  build_concelhos_map.py  # gera o mapa coroplético (simplifica o GeoJSON, cruza com o CSV e a população)
   build_listagem_dashboard_data.py  # pré-agrega a listagem de acidentes individuais para o dashboard
   build_serie_nacional_dashboard_data.py  # combina a série anual e mensal nacional para o dashboard
 dashboard/
@@ -54,7 +55,8 @@ data/
 .\.venv\Scripts\python.exe src\parser_pontos_negros_resumo.py  # -> data/processed/pontos_negros_resumo_anual.csv (descarrega o Excel de resumo da fonte, precisa de rede)
 .\.venv\Scripts\python.exe src\parser_distrito.py  # -> data/processed/sinistralidade_por_concelho.csv (2011-2018, cobertura parcial)
 .\.venv\Scripts\python.exe src\parser_listagem.py  # -> data/processed/listagem_acidentes.csv (2004-2018 exceto 2010)
-.\.venv\Scripts\python.exe src\build_concelhos_map.py  # -> data/processed/concelhos_map.json (requer data/ContinenteConcelhos.geojson, ver secção do mapa)
+.\.venv\Scripts\python.exe src\build_populacao_concelhos.py  # -> data/processed/populacao_concelhos_2021.csv
+.\.venv\Scripts\python.exe src\build_concelhos_map.py  # -> data/processed/concelhos_map.json (requer data/ContinenteConcelhos.geojson e populacao_concelhos_2021.csv, ver secção do mapa)
 .\.venv\Scripts\python.exe src\build_listagem_dashboard_data.py  # -> data/processed/listagem_dashboard_data.json (dados agregados para dashboard/listagem.html)
 .\.venv\Scripts\python.exe src\build_serie_nacional_dashboard_data.py  # -> data/processed/serie_nacional_dashboard_data.json (dados para dashboard/serie_nacional.html)
 ```
@@ -469,6 +471,27 @@ SVG estáticos por `build_concelhos_map.py`:
   versionado — só o `concelhos_map.json` já simplificado e embutido no
   HTML.
 
+Um indicador adicional, **"Acidentes por 100 mil habitantes"**, junta
+`populacao_concelhos_2021.csv` (`build_populacao_concelhos.py`, dados do
+Censos 2021 do INE) aos acidentes por concelho — contagens brutas fazem
+Lisboa/Porto parecerem sempre "piores" só por serem maiores; normalizado
+por população, o quadro muda por completo (2018: os 10 concelhos com
+mais acidentes por 100 mil habitantes são todos do interior/Algarve —
+Castro Marim, Alcácer do Sal, Ourique, Constância, Mora — nenhum
+coincide com os 10 com mais acidentes em bruto). Os 278 concelhos batem
+certo por nome, sem exceções, entre o CAOP e os dados do INE — ao
+contrário do join com `sinistralidade_por_concelho.csv`, que tem os
+casos de nomes abreviados descritos acima.
+
+**Limitação clara, não escondida**: a população usada é um único
+retrato de 31/12/2021, aplicado a todos os anos 2004-2018 por igual — o
+INE não publica uma série de população por concelho a recuar até 2004
+como dados abertos (só há séries anuais a esse nível a partir de 2021,
+ou estimativas distritais mais antigas). Um concelho que cresceu ou
+encolheu muito nesses 14 anos vai ter o indicador desviado na mesma
+direção do erro — mostrado no dashboard com esta ressalva, não como um
+número exato.
+
 ## Outputs gerados
 
 - `data/processed/manifest.csv` — catálogo de todos os 490 documentos
@@ -526,9 +549,13 @@ SVG estáticos por `build_concelhos_map.py`:
   secção acima; só falta 2010): `distrito, ano, concelho,
   acidentes_com_vitimas, vitimas_mortais, feridos_graves, feridos_leves,
   total_vitimas, indice_gravidade, source_file`.
+- `data/processed/populacao_concelhos_2021.csv` — população residente
+  por concelho, Censos 2021 (INE), 278 linhas: `concelho, distrito,
+  populacao_residente_2021`.
 - `data/processed/concelhos_map.json` — 278 concelhos com path SVG
-  simplificado + os dados de `sinistralidade_por_concelho.csv` por ano,
-  já cruzados por nome (ver secção do mapa acima); é o que está embutido
+  simplificado + os dados de `sinistralidade_por_concelho.csv` por ano
+  (incluindo `acidentes_por_100k_hab`, derivado da população acima), já
+  cruzados por nome (ver secção do mapa acima); é o que está embutido
   em `dashboard/concelhos_map.html`.
 - `data/processed/listagem_acidentes.csv` — 32488 registos individuais
   de acidentes com mortos/feridos graves, cobertura 2004-2018 exceto
@@ -546,6 +573,18 @@ SVG estáticos por `build_concelhos_map.py`:
 
 ## Limitações conhecidas / próximos passos
 
+- Os gráficos "por hora do dia" e "por dia da semana"
+  (`dashboard/listagem.html`) mostram **contagens brutas de acidentes,
+  não normalizadas por volume de tráfego**. As 18h têm mais acidentes
+  também (sobretudo) porque há mais carros na estrada a essa hora, não
+  necessariamente porque é uma hora mais perigosa por veículo — o
+  equivalente rodoviário de comparar golos totais em vez de golos/90min.
+  Pesquisado especificamente: não existe, como dado aberto, uma curva de
+  tráfego horário para Portugal (IP, IMT e INE publicam volumes de
+  tráfego só como prosa/gráfico dentro de relatórios PDF, não como
+  tabela descarregável) — por isso esta normalização concreta não é
+  possível com o que está disponível publicamente, ao contrário das
+  normalizações por população e por frota abaixo, que já têm fonte.
 - As ~4289 tabelas de `pdf_raw/` **não estão normalizadas** — o layout
   varia significativamente ao longo de 21 anos de relatórios (agências e
   metodologias diferentes), pelo que forçar um esquema único seria
