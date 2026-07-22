@@ -172,6 +172,12 @@
   tbody tr:hover { background: color-mix(in srgb, var(--series-1) 6%, transparent); }
   .num-cell { font-variant-numeric: tabular-nums; text-align: right; }
   .table-wrap { overflow-x: auto; }
+  thead th.num { text-align: right; }
+  thead th.sortable { cursor: pointer; user-select: none; }
+  thead th.sortable:hover { color: var(--text-primary); }
+  thead th.sortable::after { content: '↕'; display: inline-block; margin-left: 5px; opacity: 0.4; font-size: 0.85em; }
+  thead th.sort-asc::after { content: '▲'; opacity: 1; font-size: 0.65em; }
+  thead th.sort-desc::after { content: '▼'; opacity: 1; font-size: 0.65em; }
   footer { margin-top: 20px; font-size: 0.75rem; color: var(--text-muted); }
 </style>
 
@@ -226,9 +232,9 @@
     <h2>Os 20 acidentes mais graves</h2>
     <p class="card-sub">Ordenados por mortos, depois feridos graves</p>
     <div class="table-wrap">
-      <table>
+      <table id="severeTable">
         <thead>
-          <tr><th>Distrito</th><th>Concelho</th><th>Data</th><th>Mortos</th><th>Feridos graves</th><th>Via</th><th>Natureza</th></tr>
+          <tr><th>Distrito</th><th>Concelho</th><th>Data</th><th class="num">Mortos</th><th class="num">Feridos graves</th><th>Via</th><th>Natureza</th></tr>
         </thead>
         <tbody id="severeBody"></tbody>
       </table>
@@ -408,16 +414,53 @@ svg.querySelectorAll('.lc-hit').forEach(hit => {
   hit.addEventListener('mouseleave', () => { crosshair.style.opacity = '0'; hideTip(); });
 });
 
-// ---------- top severe table ----------
-document.getElementById('severeBody').innerHTML = DATA.top_severos.map(r => `
-  <tr>
-    <td>${r.distrito}</td>
-    <td>${r.concelho}</td>
-    <td>${r.data}</td>
-    <td class="num-cell">${r.mortos}</td>
-    <td class="num-cell">${r.feridos_graves}</td>
-    <td>${r.via || '<em style="color:var(--text-muted)">—</em>'}</td>
-    <td>${r.natureza || '<em style="color:var(--text-muted)">—</em>'}</td>
-  </tr>
-`).join('');
+// ---------- top severe table (sortable) ----------
+const severeColumns = [
+  { key: 'distrito', type: 'string' },
+  { key: 'concelho', type: 'string' },
+  { key: 'data', type: 'string' },
+  { key: 'mortos', type: 'number' },
+  { key: 'feridos_graves', type: 'number' },
+  { key: 'via', type: 'string' },
+  { key: 'natureza', type: 'string' },
+];
+let severeSort = { key: 'mortos', dir: -1 };
+
+function renderSevereTable() {
+  const { key, dir } = severeSort;
+  const type = severeColumns.find(c => c.key === key).type;
+  const rows = [...DATA.top_severos].sort((a, b) => {
+    let av = a[key], bv = b[key];
+    if (type === 'number') { av = Number(av) || 0; bv = Number(bv) || 0; }
+    else { av = (av || '').toLowerCase(); bv = (bv || '').toLowerCase(); }
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return key === 'mortos' ? (b.feridos_graves - a.feridos_graves) : 0;
+  });
+  document.getElementById('severeBody').innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.distrito}</td>
+      <td>${r.concelho}</td>
+      <td>${r.data}</td>
+      <td class="num-cell">${r.mortos}</td>
+      <td class="num-cell">${r.feridos_graves}</td>
+      <td>${r.via || '<em style="color:var(--text-muted)">—</em>'}</td>
+      <td>${r.natureza || '<em style="color:var(--text-muted)">—</em>'}</td>
+    </tr>
+  `).join('');
+}
+
+document.querySelectorAll('#severeTable thead th').forEach((th, i) => {
+  const col = severeColumns[i];
+  th.classList.add('sortable');
+  th.addEventListener('click', () => {
+    if (severeSort.key === col.key) severeSort.dir *= -1;
+    else severeSort = { key: col.key, dir: col.type === 'number' ? -1 : 1 };
+    document.querySelectorAll('#severeTable thead th').forEach(t => t.classList.remove('sort-asc', 'sort-desc'));
+    th.classList.add(severeSort.dir === 1 ? 'sort-asc' : 'sort-desc');
+    renderSevereTable();
+  });
+});
+document.querySelector('#severeTable thead th:nth-child(4)').classList.add('sort-desc');
+renderSevereTable();
 </script>

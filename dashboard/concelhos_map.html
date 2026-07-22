@@ -97,11 +97,16 @@
 
   .table-wrap { overflow-x: auto; margin-top: 16px; }
   table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-  thead th { text-align: left; padding: 8px 10px; color: var(--text-muted); font-weight: 600; border-bottom: 1px solid var(--baseline); white-space: nowrap; cursor: pointer; }
+  thead th { text-align: left; padding: 8px 10px; color: var(--text-muted); font-weight: 600; border-bottom: 1px solid var(--baseline); white-space: nowrap; }
   tbody td { padding: 7px 10px; border-bottom: 1px solid var(--gridline); color: var(--text-primary); }
   tbody tr:nth-child(even) { background: color-mix(in srgb, var(--text-primary) 5%, var(--surface-1)); }
   tbody tr:hover { background: color-mix(in srgb, var(--series-1) 6%, transparent); }
   td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  thead th.sortable { cursor: pointer; user-select: none; }
+  thead th.sortable:hover { color: var(--text-primary); }
+  thead th.sortable::after { content: '↕'; display: inline-block; margin-left: 5px; opacity: 0.4; font-size: 0.85em; }
+  thead th.sort-asc::after { content: '▲'; opacity: 1; font-size: 0.65em; }
+  thead th.sort-desc::after { content: '▼'; opacity: 1; font-size: 0.65em; }
   footer { margin-top: 20px; font-size: 0.75rem; color: var(--text-muted); }
 </style>
 
@@ -148,7 +153,7 @@
 
   <div class="card table-wrap">
     <h2>Todos os concelhos (ano selecionado)</h2>
-    <table>
+    <table id="concelhosTable">
       <thead>
         <tr>
           <th>Concelho</th><th>Distrito</th>
@@ -280,8 +285,17 @@ function render() {
 
   // table
   const tableBody = document.getElementById('tableBody');
-  const allRows = Object.entries(yearData).map(([key, row]) => ({ key, ...row }))
-    .sort((a, b) => b.acidentes_com_vitimas - a.acidentes_com_vitimas);
+  const allRows = Object.entries(yearData).map(([key, row]) => ({ key, ...row }));
+  const { key: sortKey, dir: sortDir } = concelhosSort;
+  allRows.sort((a, b) => {
+    let av, bv;
+    if (sortKey === 'concelho') { av = (MAP.concelhos[a.key] || { name: a.key }).name.toLowerCase(); bv = (MAP.concelhos[b.key] || { name: b.key }).name.toLowerCase(); }
+    else if (sortKey === 'distrito') { av = (MAP.concelhos[a.key] || { distrito: '' }).distrito.toLowerCase(); bv = (MAP.concelhos[b.key] || { distrito: '' }).distrito.toLowerCase(); }
+    else { av = Number(a[sortKey]) || 0; bv = Number(b[sortKey]) || 0; }
+    if (av < bv) return -1 * sortDir;
+    if (av > bv) return 1 * sortDir;
+    return 0;
+  });
   tableBody.innerHTML = allRows.map(row => {
     const c = MAP.concelhos[row.key] || { name: row.key, distrito: '' };
     return `<tr>
@@ -295,5 +309,21 @@ function render() {
 
 yearSelect.addEventListener('change', render);
 metricSelect.addEventListener('change', render);
+
+const concelhosColumns = ['concelho', 'distrito', 'acidentes_com_vitimas', 'vitimas_mortais', 'feridos_graves', 'feridos_leves', 'total_vitimas', 'indice_gravidade'];
+let concelhosSort = { key: 'acidentes_com_vitimas', dir: -1 };
+document.querySelectorAll('#concelhosTable thead th').forEach((th, i) => {
+  const key = concelhosColumns[i];
+  th.classList.add('sortable');
+  th.addEventListener('click', () => {
+    if (concelhosSort.key === key) concelhosSort.dir *= -1;
+    else concelhosSort = { key, dir: (key === 'concelho' || key === 'distrito') ? 1 : -1 };
+    document.querySelectorAll('#concelhosTable thead th').forEach(t => t.classList.remove('sort-asc', 'sort-desc'));
+    th.classList.add(concelhosSort.dir === 1 ? 'sort-asc' : 'sort-desc');
+    render();
+  });
+});
+document.querySelector('#concelhosTable thead th:nth-child(3)').classList.add('sort-desc');
+
 render();
 </script>

@@ -159,6 +159,12 @@
   tbody tr:nth-child(even) { background: color-mix(in srgb, var(--text-primary) 5%, var(--surface-1)); }
   .num-cell { font-variant-numeric: tabular-nums; text-align: right; }
   .table-wrap { overflow-x: auto; }
+  thead th.num { text-align: right; }
+  thead th.sortable { cursor: pointer; user-select: none; }
+  thead th.sortable:hover { color: var(--text-primary); }
+  thead th.sortable::after { content: '↕'; display: inline-block; margin-left: 5px; opacity: 0.4; font-size: 0.85em; }
+  thead th.sort-asc::after { content: '▲'; opacity: 1; font-size: 0.65em; }
+  thead th.sort-desc::after { content: '▼'; opacity: 1; font-size: 0.65em; }
   footer { margin-top: 20px; font-size: 0.75rem; color: var(--text-muted); }
 </style>
 
@@ -210,9 +216,9 @@
     <h2>Continente, metodologia "24h" (2023–2024)</h2>
     <p class="card-sub">Série separada — âmbito geográfico e janela de contagem diferentes das duas séries acima, não comparável diretamente</p>
     <div class="table-wrap">
-      <table>
+      <table id="continenteTable">
         <thead>
-          <tr><th>Ano</th><th>Mês</th><th>Acidentes com vítimas</th><th>Vítimas mortais</th></tr>
+          <tr><th>Ano</th><th>Mês</th><th class="num">Acidentes com vítimas</th><th class="num">Vítimas mortais</th></tr>
         </thead>
         <tbody id="continenteBody"></tbody>
       </table>
@@ -386,13 +392,44 @@ sazContainer.querySelectorAll('.bar-fill').forEach(el => {
   el.addEventListener('mouseleave', hideTip);
 });
 
-// ---------- continente 24h table ----------
-document.getElementById('continenteBody').innerHTML = DATA.serie_continente_24h.map(r => `
-  <tr>
-    <td>${r.report_year}</td>
-    <td>${String(r.month_num).padStart(2, '0')}</td>
-    <td class="num-cell">${r.acidentes_com_vitimas.toLocaleString('pt-PT')}</td>
-    <td class="num-cell">${r.vitimas_mortais.toLocaleString('pt-PT')}</td>
-  </tr>
-`).join('');
+// ---------- continente 24h table (sortable) ----------
+const continenteColumns = [
+  { key: 'report_year', type: 'number' },
+  { key: 'month_num', type: 'number' },
+  { key: 'acidentes_com_vitimas', type: 'number' },
+  { key: 'vitimas_mortais', type: 'number' },
+];
+let continenteSort = { key: 'report_year', dir: 1 };
+
+function renderContinenteTable() {
+  const { key, dir } = continenteSort;
+  const rows = [...DATA.serie_continente_24h].sort((a, b) => {
+    const av = Number(a[key]), bv = Number(b[key]);
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return key === 'report_year' ? (a.month_num - b.month_num) : 0;
+  });
+  document.getElementById('continenteBody').innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.report_year}</td>
+      <td>${String(r.month_num).padStart(2, '0')}</td>
+      <td class="num-cell">${r.acidentes_com_vitimas.toLocaleString('pt-PT')}</td>
+      <td class="num-cell">${r.vitimas_mortais.toLocaleString('pt-PT')}</td>
+    </tr>
+  `).join('');
+}
+
+document.querySelectorAll('#continenteTable thead th').forEach((th, i) => {
+  const col = continenteColumns[i];
+  th.classList.add('sortable');
+  th.addEventListener('click', () => {
+    if (continenteSort.key === col.key) continenteSort.dir *= -1;
+    else continenteSort = { key: col.key, dir: -1 };
+    document.querySelectorAll('#continenteTable thead th').forEach(t => t.classList.remove('sort-asc', 'sort-desc'));
+    th.classList.add(continenteSort.dir === 1 ? 'sort-asc' : 'sort-desc');
+    renderContinenteTable();
+  });
+});
+document.querySelector('#continenteTable thead th:nth-child(1)').classList.add('sort-asc');
+renderContinenteTable();
 </script>
