@@ -23,6 +23,7 @@ src/
   build_condutores_alcoolemia.py  # extrai a série de condutores testados por álcool, 1998-2004, do mesmo dump
   parser_pontos_negros.py  # extrai a lista de pontos negros (2019-2022) em PDF
   geocode_pontos_negros.py  # estima lat/lon por estrada+km, cruzando com os marcos quilométricos da IP (SIGIP)
+  parser_pontos_negros_resumo.py  # descarrega e normaliza o Excel de resumo anual (contagens nacionais, inclui 2023)
   parser_distrito.py  # extrai sinistralidade por concelho dos relatórios por distrito
   parser_listagem.py  # extrai a listagem de acidentes individuais (mortos/feridos graves) dos mesmos relatórios
   build_concelhos_map.py  # gera o mapa coroplético (simplifica o GeoJSON, cruza com o CSV)
@@ -50,6 +51,7 @@ data/
 .\.venv\Scripts\python.exe src\build_condutores_alcoolemia.py  # -> data/processed/condutores_alcoolemia.csv (requer os PDFs nacionais 1999-2004 em data/raw/<ano>/)
 .\.venv\Scripts\python.exe src\parser_pontos_negros.py  # -> data/processed/pontos_negros.csv (requer PDFs em data/raw/pontos_negros/PN_<ano>.pdf)
 .\.venv\Scripts\python.exe src\geocode_pontos_negros.py  # -> acrescenta lat/lon/geocoding_precisao_km a pontos_negros.csv (consulta o SIGIP da IP, precisa de rede; correr depois de parser_pontos_negros.py)
+.\.venv\Scripts\python.exe src\parser_pontos_negros_resumo.py  # -> data/processed/pontos_negros_resumo_anual.csv (descarrega o Excel de resumo da fonte, precisa de rede)
 .\.venv\Scripts\python.exe src\parser_distrito.py  # -> data/processed/sinistralidade_por_concelho.csv (2011-2018, cobertura parcial)
 .\.venv\Scripts\python.exe src\parser_listagem.py  # -> data/processed/listagem_acidentes.csv (2004-2018 exceto 2010)
 .\.venv\Scripts\python.exe src\build_concelhos_map.py  # -> data/processed/concelhos_map.json (requer data/ContinenteConcelhos.geojson, ver secção do mapa)
@@ -239,6 +241,26 @@ pela heurística de quebra de página — corrigido detetando que a
 continuação não trazia nenhum campo de identidade (Entidade/Estrada)
 nas duas primeiras linhas da página nova, sinal de que era o mesmo
 registo a continuar, não um novo (ver `parser_pontos_negros.py`).
+
+**Resumo anual — outra fonte, outra granularidade**: a ANSR publica
+ainda, na mesma secção do site, um Excel mensal ("PN-ISSR Recomendações")
+com **contagens nacionais por ano** (Nº de pontos negros, Nº de
+inspeções/ISSR, recomendações emitidas/implementadas, taxa de execução)
+— já inclui **2023** (40 pontos negros identificados), que a lista
+detalhada por troço não cobre. `parser_pontos_negros_resumo.py` descarrega
+este ficheiro e produz `pontos_negros_resumo_anual.csv`. Duas notas:
+
+- O ficheiro é republicado todos os meses com o mês corrente no próprio
+  nome (`PN JUN. 2026.xlsx`, `PN JUL. 2026.xlsx`, ...) e no título da
+  folha — o parser descobre o nome atual a partir da página fonte em vez
+  de o assumir fixo.
+- 2023 só tem duas das oito colunas preenchidas na fonte (Nº PN e PN
+  Recorrentes; as restantes ficam "-", ainda por apurar) — ficam vazias
+  no CSV, não a zero.
+- **Não é o mesmo nível de detalhe** que `pontos_negros.csv`: é só o
+  total nacional do ano, não por troço/estrada, por isso não dá para
+  cruzar linha a linha com a lista detalhada — mostrado à parte no
+  dashboard por essa razão.
 
 ## Sinistralidade por concelho (relatórios de distrito)
 
@@ -493,6 +515,12 @@ SVG estáticos por `build_concelhos_map.py`:
   estado_intervencao, lat, lon, geocoding_precisao_km` — os últimos três
   ficam vazios nos 27 registos não geocodificados (ver secção "Pontos
   Negros" acima).
+- `data/processed/pontos_negros_resumo_anual.csv` — contagens nacionais
+  por ano, 2019-2023, 5 linhas (ver secção "Pontos Negros" acima):
+  `ano, n_pn, pn_recorrentes, n_issr_pn, n_issr_outros, n_issr_total,
+  recomendacoes_emitidas, recomendacoes_implementadas,
+  taxa_execucao_pct` — as últimas 6 colunas ficam vazias em 2023 (ainda
+  por apurar na fonte).
 - `data/processed/sinistralidade_por_concelho.csv` — 3819 registos
   (distrito × ano × concelho), cobertura 2004-2009 e 2011-2018 (ver
   secção acima; só falta 2010): `distrito, ano, concelho,
@@ -559,12 +587,13 @@ SVG estáticos por `build_concelhos_map.py`:
   SIGIP da IP, ou marcos km longe demais para uma interpolação fiável).
   `pontos_negros.csv` não inclui o texto de "Problemas
   identificados"/"Recomendações" (descartado deliberadamente por risco de
-  atribuição incorreta). Só cobre 2019-2022
-  — reconfirmado em 2026-07-22 (re-scrape da página fonte): continua a só
-  existir PDF "PN" detalhado (por troço) para esses 4 anos. Existe, porém,
-  um novo ficheiro `.xlsx` de resumo ("PN JUN. 2026.xlsx", ainda não
-  integrado neste projeto) com contagens agregadas por ano — inclui já
-  2023 (40 pontos negros identificados), mas só ao nível de totais anuais
-  (Nº PN, Nº ISSR, recomendações emitidas/implementadas), não ao nível de
-  troço/estrada como o CSV atual — granularidade diferente, exigiria um
-  parser próprio.
+  atribuição incorreta). Só cobre 2019-2022 — reconfirmado em 2026-07-22
+  (re-scrape da página fonte): continua a só existir PDF "PN" detalhado
+  (por troço) para esses 4 anos. ~~Existe, porém, um novo ficheiro
+  `.xlsx` de resumo, ainda não integrado neste projeto~~ — resolvido:
+  `parser_pontos_negros_resumo.py` normaliza-o para
+  `pontos_negros_resumo_anual.csv` (contagens nacionais por ano, já
+  inclui 2023 — ver secção "Pontos Negros" acima). Continua a ser uma
+  granularidade diferente (totais anuais, não por troço/estrada) — as
+  duas tabelas não se cruzam linha a linha, ficam lado a lado no
+  dashboard por essa razão.
