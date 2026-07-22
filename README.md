@@ -17,6 +17,7 @@ src/
   scraper.py       # gera o manifesto de todos os documentos publicados
   downloader.py    # descarrega os ficheiros do manifesto (resumível)
   parser_xlsx.py   # normaliza os anexos .xlsx (2020-2025) em CSV
+  parser_continente_24h_pdf.py  # extrai a série Continente/24h de 2020-2022 dos PDFs (a ANSR só tem esses anos em Excel a partir de 2023)
   parser_pdf.py    # extrai tabelas dos relatórios nacionais em PDF (1999-2019)
   build_serie_anual_nacional.py  # extrai a série anual nacional 1975-2019 do dump do parser_pdf.py
   parser_pontos_negros.py  # extrai a lista de pontos negros (2019-2022) em PDF
@@ -41,6 +42,7 @@ data/
 .\.venv\Scripts\python.exe src\scraper.py       # -> data/processed/manifest.csv
 .\.venv\Scripts\python.exe src\downloader.py    # -> data/raw/<ano>/...
 .\.venv\Scripts\python.exe src\parser_xlsx.py   # -> data/processed/*.csv (2020-2025)
+.\.venv\Scripts\python.exe src\parser_continente_24h_pdf.py  # -> acrescenta 2020-2022 a sinistralidade_mensal_continente_24h.csv (requer os 3 PDFs "24h" em data/raw/<ano>/, correr depois de parser_xlsx.py)
 .\.venv\Scripts\python.exe src\parser_pdf.py    # -> data/processed/pdf_raw/*, pdf_tables_index.csv (1999-2019)
 .\.venv\Scripts\python.exe src\build_serie_anual_nacional.py  # -> data/processed/serie_anual_nacional.csv (requer pdf_tables_index.csv)
 .\.venv\Scripts\python.exe src\parser_pontos_negros.py  # -> data/processed/pontos_negros.csv (requer PDFs em data/raw/pontos_negros/PN_<ano>.pdf)
@@ -140,7 +142,7 @@ gravidade por ano, sazonalidade (média de acidentes por mês do ano,
 quebra de abril de 2020 (925 acidentes com vítimas nesse mês, menos de
 metade da média sazonal de ~2364 para abril, coincidindo com o
 confinamento geral). A série `sinistralidade_mensal_continente_24h.csv`
-(2023-2024, âmbito e metodologia diferentes — ver secção "O que existe
+(2020-2024, âmbito e metodologia diferentes — ver secção "O que existe
 na fonte") é mostrada à parte, como tabela, para não ser lida como
 comparável às duas séries principais.
 
@@ -406,9 +408,12 @@ SVG estáticos por `build_concelhos_map.py`:
   vitimas_mortais, feridos_graves, feridos_leves`.
 - `data/processed/sinistralidade_mensal_continente_24h.csv` — a mesma
   estrutura, mas âmbito **Continente** (exclui Açores/Madeira),
-  metodologia "24h": só 2023–2024 (24 linhas) — é a única janela de anos
-  em que a ANSR publicou o anexo "24h" já com uma tabela mensal
-  equivalente à do anexo "30 dias".
+  metodologia "24h": 2020–2024 (60 linhas). A ANSR só publicou o anexo
+  "24h" em Excel (com uma tabela mensal equivalente à do anexo "30
+  dias") a partir de 2023; 2020-2022 vêm de `parser_continente_24h_pdf.py`,
+  que extrai a mesma tabela ("Sinistralidade no Continente por mês") do
+  relatório "24h" anual em PDF desses anos (ver secção "Dashboard de
+  tendências nacionais").
 - `data/processed/pdf_tables_index.csv` — índice de **4289 tabelas**
   extraídas dos 21 relatórios nacionais de 1999–2019 (ano, ficheiro de
   origem, página, índice da tabela na página, nº de linhas/colunas,
@@ -464,10 +469,14 @@ SVG estáticos por `build_concelhos_map.py`:
   mensal, mas a deteção deste layout ("Quadros" combinados numa sheet,
   ex. `'4 e 5'`) só foi validada contra um único ficheiro (setembro
   2025) — vale a pena confirmar quando sair a próxima edição mensal.
-- A série Continente/24h só tem 2023–2024: para 2020-2022 a ANSR só
-  publicou o anexo `.xlsx` "30 dias" (confirmado no manifesto — não há
-  um anexo "24h" em Excel para esses anos, só em PDF, que não é
-  processado por este parser).
+- ~~A série Continente/24h só tem 2023–2024~~ — resolvido: agora cobre
+  2020-2024. Para 2020-2022 a ANSR só publicou o anexo "24h" em PDF, não
+  em Excel (confirmado no manifesto); `parser_continente_24h_pdf.py`
+  extrai a mesma tabela mensal diretamente do PDF por posição de
+  palavra (a deteção de tabela do pdfplumber perde metade das linhas
+  neste layout). As duas sobreposições entre relatórios consecutivos
+  (2020 no relatório de 2020 vs. no de 2021; 2021 no de 2021 vs. no de
+  2022) batem certo, número a número.
 - `xlsx_raw/` e `pdf_raw/` guardam cada tabela tal como está na fonte
   (com cabeçalhos de várias linhas, células vazias, linhas de totais);
   útil para não perder informação, mas a maioria das tabelas ainda não
