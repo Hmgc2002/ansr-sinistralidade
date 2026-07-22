@@ -21,6 +21,7 @@ src/
   parser_pdf.py    # extrai tabelas dos relatórios nacionais em PDF (1999-2019)
   build_serie_anual_nacional.py  # extrai a série anual nacional 1975-2019 do dump do parser_pdf.py
   parser_pontos_negros.py  # extrai a lista de pontos negros (2019-2022) em PDF
+  geocode_pontos_negros.py  # estima lat/lon por estrada+km, cruzando com os marcos quilométricos da IP (SIGIP)
   parser_distrito.py  # extrai sinistralidade por concelho dos relatórios por distrito
   parser_listagem.py  # extrai a listagem de acidentes individuais (mortos/feridos graves) dos mesmos relatórios
   build_concelhos_map.py  # gera o mapa coroplético (simplifica o GeoJSON, cruza com o CSV)
@@ -46,6 +47,7 @@ data/
 .\.venv\Scripts\python.exe src\parser_pdf.py    # -> data/processed/pdf_raw/*, pdf_tables_index.csv (1999-2019)
 .\.venv\Scripts\python.exe src\build_serie_anual_nacional.py  # -> data/processed/serie_anual_nacional.csv (requer pdf_tables_index.csv)
 .\.venv\Scripts\python.exe src\parser_pontos_negros.py  # -> data/processed/pontos_negros.csv (requer PDFs em data/raw/pontos_negros/PN_<ano>.pdf)
+.\.venv\Scripts\python.exe src\geocode_pontos_negros.py  # -> acrescenta lat/lon/geocoding_precisao_km a pontos_negros.csv (consulta o SIGIP da IP, precisa de rede; correr depois de parser_pontos_negros.py)
 .\.venv\Scripts\python.exe src\parser_distrito.py  # -> data/processed/sinistralidade_por_concelho.csv (2011-2018, cobertura parcial)
 .\.venv\Scripts\python.exe src\parser_listagem.py  # -> data/processed/listagem_acidentes.csv (2004-2018 exceto 2010)
 .\.venv\Scripts\python.exe src\build_concelhos_map.py  # -> data/processed/concelhos_map.json (requer data/ContinenteConcelhos.geojson, ver secção do mapa)
@@ -159,13 +161,25 @@ Rodoviária > Pontos Negros Recomendações`, não em `Estatísticas`), PDFs
 anuais com inspeções a "pontos negros" (troços rodoviários perigosos) e
 as recomendações de segurança feitas às entidades gestoras das vias.
 
-**Importante para quem queira um mapa**: estes pontos são identificados
-por **estrada + quilómetro** (ex.: "A28, Km 3,500 ao Km 3,600"), não por
-coordenadas GPS. Não há geolocalização pronta a usar — construir um mapa
-exigiria geocodificar estes pares estrada/km, o que precisaria de uma
-fonte adicional (ex.: dados abertos da Infraestruturas de Portugal/IMT
-com referenciação geográfica da rede rodoviária), não explorada neste
-projeto.
+**Geolocalização**: a fonte identifica estes pontos por **estrada +
+quilómetro** (ex.: "A28, Km 3,500 ao Km 3,600"), não por coordenadas
+GPS. `geocode_pontos_negros.py` cruza isso com a camada pública de
+**Marcos Quilométricos** da Infraestruturas de Portugal (SIGIP —
+[sigip.infraestruturasdeportugal.pt](https://sigip.infraestruturasdeportugal.pt/pub/rest/services/MOBILE_DRR/EQUIVIA/MapServer/0),
+~16 mil pontos a nível nacional, EPSG:3763): para o km médio de cada
+registo, interpola linearmente entre os dois marcos mais próximos na
+mesma via (números sem espaço, ex. `EN106`). A distância entre esses
+dois marcos fica como `geocoding_precisao_km` — as coordenadas só são
+escritas quando essa distância é ≤ 5 km, para não apresentar como
+preciso um ponto interpolado ao longo de dezenas de km de uma via
+sinuosa. Resultado: **54 dos 81 registos geocodificados**. Os 27 que
+ficam de fora dividem-se em dois casos, ambos deixados em aberto de
+propósito (ver limitações): vias não cobertas pelo SIGIP (autoestradas
+concessionadas como a A2/A3/A5, e ainda a EN125/EN378/IC20, por razão
+não indicada pela fonte), e troços onde os marcos mais próximos ficam
+a mais de 5 km um do outro (A1, EN10, EN106, EN206) — nesses, uma
+interpolação reta entre dois pontos tão distantes ao longo de uma via
+com curvas dava uma posição pouco fiável.
 
 Extração: `pdfplumber` não deteta as tabelas destes PDFs de forma
 fiável — a estratégia de deteção por linhas perde silenciosamente
@@ -428,7 +442,9 @@ SVG estáticos por `build_concelhos_map.py`:
   total_feridos, indice_gravidade, source_report_year`.
 - `data/processed/pontos_negros.csv` — 81 registos de pontos negros (2019-2022):
   `year, entidade_gestora, estrada, km, relatorio_data,
-  estado_intervencao` (ver secção "Pontos Negros" acima).
+  estado_intervencao, lat, lon, geocoding_precisao_km` — os últimos três
+  ficam vazios nos 27 registos não geocodificados (ver secção "Pontos
+  Negros" acima).
 - `data/processed/sinistralidade_por_concelho.csv` — 3819 registos
   (distrito × ano × concelho), cobertura 2004-2009 e 2011-2018 (ver
   secção acima; só falta 2010): `distrito, ano, concelho,
@@ -481,9 +497,13 @@ SVG estáticos por `build_concelhos_map.py`:
   (com cabeçalhos de várias linhas, células vazias, linhas de totais);
   útil para não perder informação, mas a maioria das tabelas ainda não
   tem uma versão "tidy" própria como a série mensal nacional.
-- `pontos_negros.csv` não tem geolocalização (ver secção acima) e não
-  inclui o texto de "Problemas identificados"/"Recomendações" (descartado
-  deliberadamente por risco de atribuição incorreta). Só cobre 2019-2022
+- ~~`pontos_negros.csv` não tem geolocalização~~ — resolvido para 54 dos
+  81 registos (ver secção "Pontos Negros" acima e `geocode_pontos_negros.py`);
+  os restantes 27 ficam sem lat/lon de propósito (via não coberta pelo
+  SIGIP da IP, ou marcos km longe demais para uma interpolação fiável).
+  `pontos_negros.csv` não inclui o texto de "Problemas
+  identificados"/"Recomendações" (descartado deliberadamente por risco de
+  atribuição incorreta). Só cobre 2019-2022
   — reconfirmado em 2026-07-22 (re-scrape da página fonte): continua a só
   existir PDF "PN" detalhado (por troço) para esses 4 anos. Existe, porém,
   um novo ficheiro `.xlsx` de resumo ("PN JUN. 2026.xlsx", ainda não
