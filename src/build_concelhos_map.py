@@ -236,6 +236,10 @@ def main() -> None:
 
     out = {
         "viewBox": f"0 0 {SVG_WIDTH:.1f} {height:.1f}",
+        # exposed so other scripts (e.g. build_pontos_negros_map.py) can
+        # project their own EPSG:3763 points onto this same SVG canvas
+        # without re-parsing the 36.5 MB source GeoJSON themselves
+        "projection": {"x_min": x_min, "y_max": y_max, "scale": scale},
         "concelhos": concelhos,
         "data": matched_years,
     }

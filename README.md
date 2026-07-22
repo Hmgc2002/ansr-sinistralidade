@@ -25,6 +25,7 @@ src/
   parser_pontos_negros.py  # extrai a lista de pontos negros (2019-2022) em PDF
   geocode_pontos_negros.py  # estima lat/lon por estrada+km, cruzando com os marcos quilométricos da IP (SIGIP)
   parser_pontos_negros_resumo.py  # descarrega e normaliza o Excel de resumo anual (contagens nacionais, inclui 2023)
+  build_pontos_negros_map.py  # projeta os pontos geocodificados no mesmo canvas SVG do mapa de concelhos
   parser_distrito.py  # extrai sinistralidade por concelho dos relatórios por distrito
   parser_listagem.py  # extrai a listagem de acidentes individuais (mortos/feridos graves) dos mesmos relatórios
   build_populacao_concelhos.py  # descarrega a população residente por concelho (Censos 2021, INE)
@@ -60,6 +61,7 @@ data/
 .\.venv\Scripts\python.exe src\build_populacao_concelhos.py  # -> data/processed/populacao_concelhos_2021.csv
 .\.venv\Scripts\python.exe src\build_extensao_rede_distrito.py  # -> data/processed/extensao_rede_distrito.csv
 .\.venv\Scripts\python.exe src\build_concelhos_map.py  # -> data/processed/concelhos_map.json (requer data/ContinenteConcelhos.geojson, populacao_concelhos_2021.csv e extensao_rede_distrito.csv, ver secção do mapa)
+.\.venv\Scripts\python.exe src\build_pontos_negros_map.py  # -> data/processed/pontos_negros_map.json (requer concelhos_map.json e pontos_negros.csv já geocodificado, correr depois dos dois)
 .\.venv\Scripts\python.exe src\build_listagem_dashboard_data.py  # -> data/processed/listagem_dashboard_data.json (dados agregados para dashboard/listagem.html)
 .\.venv\Scripts\python.exe src\build_frota_veiculos.py  # -> data/processed/frota_veiculos.csv (correr antes de build_serie_nacional_dashboard_data.py)
 .\.venv\Scripts\python.exe src\build_serie_nacional_dashboard_data.py  # -> data/processed/serie_nacional_dashboard_data.json (dados para dashboard/serie_nacional.html)
@@ -282,6 +284,19 @@ este ficheiro e produz `pontos_negros_resumo_anual.csv`. Duas notas:
   total nacional do ano, não por troço/estrada, por isso não dá para
   cruzar linha a linha com a lista detalhada — mostrado à parte no
   dashboard por essa razão.
+
+**Mapa dos 54 pontos geocodificados**: `build_pontos_negros_map.py`
+reaproveita a mesma projeção e os mesmos contornos de concelho já
+computados por `build_concelhos_map.py` (persistidos em
+`concelhos_map.json` como `projection: {x_min, y_max, scale}`,
+especificamente para isto — evita ter de reprocessar o
+`ContinenteConcelhos.geojson` de 36,5 MB outra vez) — projeta os 54
+registos com lat/lon de `pontos_negros.csv` (reconvertidos de WGS84
+para EPSG:3763 com `pyproj`) para o mesmo canvas SVG, desta vez sobre
+um contorno de Portugal neutro (sem coroplético, este dashboard não
+tem indicador por concelho) em vez de um link OpenStreetMap por linha.
+Os pontos são coloridos pelo mesmo semáforo de estado de intervenção
+já usado no gráfico de barras (verde/âmbar/vermelho/cinzento).
 
 ## Sinistralidade por concelho (relatórios de distrito)
 
@@ -608,6 +623,12 @@ distintos em vez de repetir o mesmo distrito 10-18 vezes.
   ambos null quando não há a fonte correspondente para esse ano), já
   cruzados por nome (ver secção do mapa acima); é o que está embutido
   em `dashboard/concelhos_map.html`.
+- `data/processed/pontos_negros_map.json` — os 54 registos geocodificados
+  de `pontos_negros.csv`, reprojetados para o mesmo canvas SVG do mapa de
+  concelhos (`viewBox`, `backdrop` — os 278 contornos de concelho
+  fundidos num só path neutro — e `points`, com `x`/`y` já projetados
+  mais os campos de identidade de cada registo); é o que está embutido
+  em `dashboard/pontos_negros.html`.
 - `data/processed/listagem_acidentes.csv` — 32488 registos individuais
   de acidentes com mortos/feridos graves, cobertura 2004-2018 exceto
   2010 (ver secção acima): `distrito, ano, concelho, data, hora,
