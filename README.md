@@ -22,9 +22,11 @@ src/
   parser_distrito.py  # extrai sinistralidade por concelho dos relatórios por distrito
   parser_listagem.py  # extrai a listagem de acidentes individuais (mortos/feridos graves) dos mesmos relatórios
   build_concelhos_map.py  # gera o mapa coroplético (simplifica o GeoJSON, cruza com o CSV)
+  build_listagem_dashboard_data.py  # pré-agrega a listagem de acidentes individuais para o dashboard
 dashboard/
   pontos_negros.html      # dashboard filtrável dos pontos negros
   concelhos_map.html      # mapa coroplético por concelho
+  listagem.html           # dashboard da listagem de acidentes individuais
 data/
   raw/             # ficheiros descarregados (não versionado, ~290 MB)
   processed/       # CSVs gerados (versionado)
@@ -41,6 +43,7 @@ data/
 .\.venv\Scripts\python.exe src\parser_distrito.py  # -> data/processed/sinistralidade_por_concelho.csv (2011-2018, cobertura parcial)
 .\.venv\Scripts\python.exe src\parser_listagem.py  # -> data/processed/listagem_acidentes.csv (2004-2018 exceto 2010)
 .\.venv\Scripts\python.exe src\build_concelhos_map.py  # -> data/processed/concelhos_map.json (requer data/ContinenteConcelhos.geojson, ver secção do mapa)
+.\.venv\Scripts\python.exe src\build_listagem_dashboard_data.py  # -> data/processed/listagem_dashboard_data.json (dados agregados para dashboard/listagem.html)
 ```
 
 ## O que existe na fonte (ANSR)
@@ -242,6 +245,31 @@ Limitações conhecidas:
   (quebra de página a meio de um texto longo) não é ligado de volta ao
   seu registo — caso raro, aceite como limitação.
 
+## Dashboard de acidentes individuais (dashboard/listagem.html)
+
+Usa `listagem_acidentes.csv` para explorar os 32488 registos por
+padrões que os datasets agregados por concelho/ano não mostram:
+evolução anual de mortos vs. feridos graves, distribuição por hora do
+dia e dia da semana, tipo de acidente e vítimas por distrito, mais uma
+tabela com os 20 acidentes mais graves.
+
+O dashboard **não embute os 32488 registos em bruto** — `src/build_
+listagem_dashboard_data.py` pré-agrega tudo em Python (por ano, hora,
+dia da semana, tipo de acidente, distrito, mais o top 20) para
+`data/processed/listagem_dashboard_data.json`, ~7,7 KB, embutido no
+HTML. O sinal interessante aqui está nos padrões agregados, não em
+percorrer registo a registo — a mesma lógica já aplicada ao mapa
+coroplético (que embute agregados por concelho/ano, não o texto bruto
+dos PDFs).
+
+O campo `natureza` do CSV é texto livre da ANSR com muitas variantes de
+abreviatura por ano (ex. "Colisão frontal", "Col. frontal", "Colisão
+lateral com outro veículo em movimento"); o script categoriza-o num
+pequeno conjunto de tipos (Despiste, Atropelamento, Colisão frontal/
+lateral/traseira/outra, Capotamento, Não especificado) por
+correspondência de palavra-chave — uma categorização feita para este
+dashboard, não um campo da fonte.
+
 ## Mapa coroplético (dashboard/concelhos_map.html)
 
 Usa `sinistralidade_por_concelho.csv` para desenhar um mapa coroplético
@@ -329,6 +357,10 @@ SVG estáticos por `build_concelhos_map.py`:
   de acidentes com mortos/feridos graves, cobertura 2004-2018 exceto
   2010 (ver secção acima): `distrito, ano, concelho, data, hora,
   mortos, feridos_graves, via, km, natureza, source_file`.
+- `data/processed/listagem_dashboard_data.json` — agregados de
+  `listagem_acidentes.csv` (por ano, hora, dia da semana, tipo de
+  acidente categorizado, distrito, top 20 mais graves), ~7,7 KB; é o
+  que está embutido em `dashboard/listagem.html` (ver secção acima).
 
 ## Limitações conhecidas / próximos passos
 

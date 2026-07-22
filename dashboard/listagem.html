@@ -1,0 +1,422 @@
+<title>ANSR — Acidentes com Mortos ou Feridos Graves (2004–2018)</title>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page-plane:     #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --series-1:       #2a78d6; /* blue   - feridos graves */
+    --series-8:       #e34948; /* red    - mortos */
+    --series-2:       #eb6834; /* orange */
+    --series-3:       #1baf7a; /* aqua */
+    --series-4:       #eda100; /* yellow */
+    --series-5:       #e87ba4; /* magenta */
+    --series-6:       #008300; /* green */
+    --series-7:       #4a3aa7; /* violet */
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page-plane:     #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --series-1:       #3987e5;
+      --series-8:       #e66767;
+      --series-2:       #d95926;
+      --series-3:       #199e70;
+      --series-4:       #c98500;
+      --series-5:       #d55181;
+      --series-6:       #008300;
+      --series-7:       #9085e9;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --page-plane:     #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --baseline:       #383835;
+    --border:         rgba(255,255,255,0.10);
+    --series-1:       #3987e5;
+    --series-8:       #e66767;
+    --series-2:       #d95926;
+    --series-3:       #199e70;
+    --series-4:       #c98500;
+    --series-5:       #d55181;
+    --series-6:       #008300;
+    --series-7:       #9085e9;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page-plane);
+    color: var(--text-primary);
+  }
+  .viz-root { padding: 24px; max-width: 1120px; margin: 0 auto; }
+
+  header.page-header { margin-bottom: 20px; }
+  h1 { font-size: 1.5rem; margin: 0 0 6px; }
+  .subtitle { color: var(--text-secondary); font-size: 0.9rem; margin: 0 0 10px; max-width: 74ch; }
+  .caveat {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    max-width: 82ch;
+  }
+  .caveat strong { color: var(--text-primary); }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin: 20px 0;
+  }
+  .stat-tile {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .stat-tile .value {
+    font-size: 1.7rem;
+    font-weight: 600;
+    font-variant-numeric: proportional-nums;
+  }
+  .stat-tile .label { font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px; }
+
+  .chart-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 720px) { .chart-row { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .card h2 { font-size: 0.95rem; margin: 0 0 2px; font-weight: 600; }
+  .card .card-sub { font-size: 0.78rem; color: var(--text-muted); margin: 0 0 12px; }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin: 0 0 12px; font-size: 0.8rem; color: var(--text-secondary); }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-key { width: 14px; height: 2px; border-radius: 1px; display: inline-block; }
+  .legend-dot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+
+  .bar-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; position: relative; }
+  .bar-label { width: 150px; flex-shrink: 0; font-size: 0.8rem; color: var(--text-secondary);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-track { flex: 1; height: 18px; position: relative; }
+  .bar-fill { height: 100%; border-radius: 4px; min-width: 4px; cursor: default; }
+  .bar-value { font-size: 0.78rem; color: var(--text-secondary); width: 40px; text-align: right;
+    font-variant-numeric: tabular-nums; flex-shrink: 0; }
+
+  .linechart-wrap { position: relative; }
+  svg.linechart { width: 100%; height: auto; display: block; overflow: visible; }
+  .lc-gridline { stroke: var(--gridline); stroke-width: 1; }
+  .lc-baseline { stroke: var(--baseline); stroke-width: 1; }
+  .lc-axis-label { fill: var(--text-muted); font-size: 10px; }
+  .lc-crosshair { stroke: var(--baseline); stroke-width: 1; pointer-events: none; opacity: 0; }
+  .lc-hit { fill: transparent; }
+
+  .tooltip {
+    position: fixed;
+    pointer-events: none;
+    background: var(--text-primary);
+    color: var(--surface-1);
+    font-size: 0.75rem;
+    padding: 6px 9px;
+    border-radius: 6px;
+    display: none;
+    z-index: 10;
+    white-space: nowrap;
+    line-height: 1.5;
+  }
+  .tooltip .tt-row { display: flex; align-items: center; gap: 6px; }
+  .tooltip .tt-key { width: 10px; height: 2px; display: inline-block; }
+  .tooltip .tt-val { font-weight: 600; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  thead th {
+    text-align: left;
+    padding: 8px 10px;
+    color: var(--text-muted);
+    font-weight: 600;
+    border-bottom: 1px solid var(--baseline);
+    white-space: nowrap;
+  }
+  tbody td { padding: 8px 10px; border-bottom: 1px solid var(--gridline); vertical-align: top; }
+  tbody tr:hover { background: color-mix(in srgb, var(--series-1) 6%, transparent); }
+  .num-cell { font-variant-numeric: tabular-nums; text-align: right; }
+  .table-wrap { overflow-x: auto; }
+  footer { margin-top: 20px; font-size: 0.75rem; color: var(--text-muted); }
+</style>
+
+<div class="viz-root">
+  <header class="page-header">
+    <h1>ANSR — Acidentes com Mortos ou Feridos Graves (2004–2018)</h1>
+    <p class="subtitle">Registo individual de cada acidente com vítimas mortais ou feridos graves, extraído da secção "Listagem dos acidentes" dos relatórios PDF anuais por distrito da ANSR.</p>
+    <div class="caveat">
+      <strong>Cobertura:</strong> 2004–2018, exceto 2010 (formato de origem inconsistente mesmo dentro do mesmo ficheiro) e <code>Lisboa 2018 30 dias</code> (erro de geração no próprio PDF fonte, "Out of object memory").
+      O campo <strong>Km</strong> só é preenchido quando o acidente ocorre numa via com marco quilométrico — vazio em ~56% dos registos (arruamentos urbanos não têm). O <strong>tipo de acidente</strong> abaixo é uma categorização automática por palavra-chave do texto original da ANSR, não um campo da fonte.
+      Dataset não-oficial, extraído automaticamente — pode conter imprecisões (ver README do projeto para detalhes e casos-limite conhecidos).
+    </div>
+  </header>
+
+  <section class="stat-row" id="statRow"></section>
+
+  <section class="card">
+    <h2>Evolução anual</h2>
+    <p class="card-sub">Vítimas mortais e feridos graves por ano (soma de todos os distritos)</p>
+    <div class="legend" id="yearLegend"></div>
+    <div class="linechart-wrap">
+      <svg class="linechart" id="yearChart" viewBox="0 0 700 260"></svg>
+    </div>
+  </section>
+
+  <section class="chart-row">
+    <div class="card">
+      <h2>Por hora do dia</h2>
+      <p class="card-sub">Nº de acidentes por hora de ocorrência</p>
+      <div id="hourChart"></div>
+    </div>
+    <div class="card">
+      <h2>Por dia da semana</h2>
+      <p class="card-sub">Nº de acidentes por dia da semana</p>
+      <div id="weekdayChart"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Tipo de acidente</h2>
+    <p class="card-sub">Categorização automática da descrição da ANSR por palavra-chave</p>
+    <div id="natureChart"></div>
+  </section>
+
+  <section class="card">
+    <h2>Vítimas por distrito</h2>
+    <p class="card-sub">Mortos + feridos graves, todos os anos cobertos</p>
+    <div id="districtChart"></div>
+  </section>
+
+  <section class="card">
+    <h2>Os 20 acidentes mais graves</h2>
+    <p class="card-sub">Ordenados por mortos, depois feridos graves</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Distrito</th><th>Concelho</th><th>Data</th><th>Mortos</th><th>Feridos graves</th><th>Via</th><th>Natureza</th></tr>
+        </thead>
+        <tbody id="severeBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Fonte: relatórios anuais por distrito da ANSR (ansr.pt/Estatisticas) — dataset não-oficial, projeto <code>ansr-sinistralidade</code>. Não afiliado com a ANSR.
+  </footer>
+</div>
+<div class="tooltip" id="tooltip"></div>
+
+<script type="application/json" id="data-json">{"total": 32488, "total_mortos": 8920, "total_feridos_graves": 29541, "anos": ["2004", "2005", "2006", "2007", "2008", "2009", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018"], "n_distritos": 18, "por_ano": [{"ano": "2004", "acidentes": 899, "mortos": 279, "feridos_graves": 863}, {"ano": "2005", "acidentes": 1024, "mortos": 305, "feridos_graves": 953}, {"ano": "2006", "acidentes": 3549, "mortos": 850, "feridos_graves": 3483}, {"ano": "2007", "acidentes": 3242, "mortos": 860, "feridos_graves": 3140}, {"ano": "2008", "acidentes": 2825, "mortos": 775, "feridos_graves": 2600}, {"ano": "2009", "acidentes": 2777, "mortos": 737, "feridos_graves": 2624}, {"ano": "2011", "acidentes": 2609, "mortos": 865, "feridos_graves": 2221}, {"ano": "2012", "acidentes": 2262, "mortos": 709, "feridos_graves": 1916}, {"ano": "2013", "acidentes": 2197, "mortos": 636, "feridos_graves": 1941}, {"ano": "2014", "acidentes": 2110, "mortos": 565, "feridos_graves": 1826}, {"ano": "2015", "acidentes": 2369, "mortos": 593, "feridos_graves": 2143}, {"ano": "2016", "acidentes": 2207, "mortos": 563, "feridos_graves": 1990}, {"ano": "2017", "acidentes": 2402, "mortos": 600, "feridos_graves": 2110}, {"ano": "2018", "acidentes": 2016, "mortos": 583, "feridos_graves": 1731}], "por_hora": [{"hora": 0, "acidentes": 883}, {"hora": 1, "acidentes": 641}, {"hora": 2, "acidentes": 613}, {"hora": 3, "acidentes": 509}, {"hora": 4, "acidentes": 527}, {"hora": 5, "acidentes": 543}, {"hora": 6, "acidentes": 785}, {"hora": 7, "acidentes": 1263}, {"hora": 8, "acidentes": 1541}, {"hora": 9, "acidentes": 1275}, {"hora": 10, "acidentes": 1342}, {"hora": 11, "acidentes": 1379}, {"hora": 12, "acidentes": 1474}, {"hora": 13, "acidentes": 1396}, {"hora": 14, "acidentes": 1707}, {"hora": 15, "acidentes": 1899}, {"hora": 16, "acidentes": 1993}, {"hora": 17, "acidentes": 2310}, {"hora": 18, "acidentes": 2779}, {"hora": 19, "acidentes": 2323}, {"hora": 20, "acidentes": 1729}, {"hora": 21, "acidentes": 1369}, {"hora": 22, "acidentes": 1177}, {"hora": 23, "acidentes": 1031}], "por_dia_semana": [{"dia": "Segunda", "acidentes": 4333}, {"dia": "Terça", "acidentes": 4103}, {"dia": "Quarta", "acidentes": 4159}, {"dia": "Quinta", "acidentes": 4351}, {"dia": "Sexta", "acidentes": 4852}, {"dia": "Sábado", "acidentes": 5564}, {"dia": "Domingo", "acidentes": 5126}], "por_natureza": [{"tipo": "Despiste", "acidentes": 10352}, {"tipo": "Atropelamento", "acidentes": 6412}, {"tipo": "Outra colisão", "acidentes": 5993}, {"tipo": "Colisão frontal", "acidentes": 4902}, {"tipo": "Colisão traseira", "acidentes": 2036}, {"tipo": "Colisão lateral", "acidentes": 1711}, {"tipo": "Não especificado", "acidentes": 624}, {"tipo": "Outro", "acidentes": 458}], "por_distrito": [{"distrito": "Lisboa", "acidentes": 4540, "mortos": 961, "feridos_graves": 4227}, {"distrito": "Porto", "acidentes": 3349, "mortos": 1015, "feridos_graves": 2829}, {"distrito": "Setúbal", "acidentes": 2529, "mortos": 813, "feridos_graves": 2238}, {"distrito": "Santarém", "acidentes": 2496, "mortos": 651, "feridos_graves": 2317}, {"distrito": "Faro", "acidentes": 2441, "mortos": 568, "feridos_graves": 2371}, {"distrito": "Braga", "acidentes": 2528, "mortos": 643, "feridos_graves": 2273}, {"distrito": "Leiria", "acidentes": 2306, "mortos": 667, "feridos_graves": 2092}, {"distrito": "Aveiro", "acidentes": 2234, "mortos": 691, "feridos_graves": 1901}, {"distrito": "Viseu", "acidentes": 1406, "mortos": 407, "feridos_graves": 1292}, {"distrito": "Coimbra", "acidentes": 1386, "mortos": 504, "feridos_graves": 1136}, {"distrito": "Beja", "acidentes": 1211, "mortos": 395, "feridos_graves": 1171}, {"distrito": "Castelo Branco", "acidentes": 1175, "mortos": 260, "feridos_graves": 1128}, {"distrito": "Évora", "acidentes": 966, "mortos": 287, "feridos_graves": 898}, {"distrito": "Guarda", "acidentes": 863, "mortos": 233, "feridos_graves": 815}, {"distrito": "Portalegre", "acidentes": 833, "mortos": 194, "feridos_graves": 813}, {"distrito": "Bragança", "acidentes": 801, "mortos": 200, "feridos_graves": 763}, {"distrito": "Vila Real", "acidentes": 760, "mortos": 205, "feridos_graves": 697}, {"distrito": "Viana do Castelo", "acidentes": 664, "mortos": 226, "feridos_graves": 580}], "top_severos": [{"distrito": "Castelo Branco", "concelho": "Vila Velha Ródão", "ano": "2007", "data": "2007-11-05", "mortos": 13, "feridos_graves": 7, "via": "A23", "natureza": "Col. lat. c/ outro veíc. mov."}, {"distrito": "Castelo Branco", "concelho": "Serta", "ano": "2013", "data": "2013-01-27", "mortos": 11, "feridos_graves": 12, "via": "IC8", "natureza": "Despiste com transposição do dispositivo de retenção lateral"}, {"distrito": "Beja", "concelho": "Ourique", "ano": "2013", "data": "2013-08-17", "mortos": 7, "feridos_graves": 1, "via": "IC1", "natureza": "Colisão frontal"}, {"distrito": "Porto", "concelho": "Penafiel", "ano": "2009", "data": "2009-08-28", "mortos": 7, "feridos_graves": 0, "via": "VAR-CAVALU", "natureza": "Colisão frontal"}, {"distrito": "Setúbal", "concelho": "Palmela", "ano": "2018", "data": "2018-06-21", "mortos": 6, "feridos_graves": 2, "via": "EN5", "natureza": "Colisão frontal"}, {"distrito": "Leiria", "concelho": "Pombal", "ano": "2018", "data": "2018-09-24", "mortos": 6, "feridos_graves": 0, "via": "IC8", "natureza": "Colisão frontal"}, {"distrito": "Coimbra", "concelho": "Coimbra", "ano": "2015", "data": "2015-05-02", "mortos": 5, "feridos_graves": 4, "via": "IC2", "natureza": "Despiste simples"}, {"distrito": "Leiria", "concelho": "Alcobaça", "ano": "2007", "data": "2007-08-14", "mortos": 5, "feridos_graves": 1, "via": "EN1", "natureza": "Colisão frontal"}, {"distrito": "Beja", "concelho": "Castro Verde", "ano": "2012", "data": "2012-08-24", "mortos": 5, "feridos_graves": 0, "via": "IC1", "natureza": "Colisão tras. c/ outro veíc. mov."}, {"distrito": "Beja", "concelho": "Castro Verde", "ano": "2015", "data": "2015-09-21", "mortos": 5, "feridos_graves": 0, "via": "EN2", "natureza": "Colisão lateral com outro veículo em movimento"}, {"distrito": "Porto", "concelho": "Amarante", "ano": "2004", "data": "2004-07-07", "mortos": 4, "feridos_graves": 4, "via": "A4 em movimento", "natureza": ""}, {"distrito": "Évora", "concelho": "Evora", "ano": "2013", "data": "2013-12-25", "mortos": 4, "feridos_graves": 4, "via": "EN114", "natureza": "Colisão frontal"}, {"distrito": "Porto", "concelho": "Baiao", "ano": "2009", "data": "2009-08-08", "mortos": 4, "feridos_graves": 3, "via": "", "natureza": "Colisão lat. c/outro veíc. mov."}, {"distrito": "Santarém", "concelho": "Rio Maior", "ano": "2006", "data": "2006-12-26", "mortos": 4, "feridos_graves": 2, "via": "IC2", "natureza": "Colisão frontal"}, {"distrito": "Coimbra", "concelho": "Figueira da Foz", "ano": "2006", "data": "2006-08-02", "mortos": 4, "feridos_graves": 1, "via": "Urbana", "natureza": "Desp. c/ capotamento"}, {"distrito": "Leiria", "concelho": "Leiria", "ano": "2007", "data": "2007-12-25", "mortos": 4, "feridos_graves": 1, "via": "EN1", "natureza": "Despiste simples"}, {"distrito": "Setúbal", "concelho": "Almada", "ano": "2007", "data": "2007-10-19", "mortos": 4, "feridos_graves": 1, "via": "IC20", "natureza": "Despiste com capotamento"}, {"distrito": "Setúbal", "concelho": "Barreiro", "ano": "2009", "data": "2009-11-15", "mortos": 4, "feridos_graves": 1, "via": "IC32", "natureza": "Despiste com capotamento"}, {"distrito": "Lisboa", "concelho": "Alenquer", "ano": "2011", "data": "2011-09-15", "mortos": 4, "feridos_graves": 1, "via": "IC2", "natureza": "Colisão tras. c/ outro veíc. mov."}, {"distrito": "Évora", "concelho": "Alandroal", "ano": "2005", "data": "2005-03-01", "mortos": 4, "feridos_graves": 0, "via": "EN255", "natureza": "Despiste c/ capotamento"}]}</script>
+<script>
+const DATA = JSON.parse(document.getElementById('data-json').textContent);
+
+const tooltip = document.getElementById('tooltip');
+function showTip(e, html) {
+  tooltip.innerHTML = '';
+  tooltip.appendChild(html);
+  tooltip.style.display = 'block';
+  tooltip.style.left = (e.clientX + 12) + 'px';
+  tooltip.style.top = (e.clientY + 12) + 'px';
+}
+function hideTip() { tooltip.style.display = 'none'; }
+
+function simpleTip(text) {
+  const d = document.createElement('div');
+  d.textContent = text;
+  return d;
+}
+
+// ---------- stat tiles ----------
+const anosLabel = DATA.anos[0] + '–' + DATA.anos[DATA.anos.length - 1] + (DATA.anos.includes('2010') ? '' : ' (exc. 2010)');
+document.getElementById('statRow').innerHTML = `
+  <div class="stat-tile"><div class="value">${DATA.total.toLocaleString('pt-PT')}</div><div class="label">Acidentes registados</div></div>
+  <div class="stat-tile"><div class="value">${DATA.total_mortos.toLocaleString('pt-PT')}</div><div class="label">Vítimas mortais</div></div>
+  <div class="stat-tile"><div class="value">${DATA.total_feridos_graves.toLocaleString('pt-PT')}</div><div class="label">Feridos graves</div></div>
+  <div class="stat-tile"><div class="value">${DATA.n_distritos}</div><div class="label">Distritos</div></div>
+  <div class="stat-tile"><div class="value">${anosLabel}</div><div class="label">Período</div></div>
+`;
+
+// ---------- generic horizontal bar chart ----------
+function renderBarChart(container, rows, colorFn, tipSuffix) {
+  const max = Math.max(...rows.map(r => r.count), 1);
+  container.innerHTML = rows.map(r => `
+    <div class="bar-row">
+      <div class="bar-label" title="${r.label}">${r.label}</div>
+      <div class="bar-track">
+        <div class="bar-fill" data-label="${r.label}" data-count="${r.count}"
+             style="width:${(r.count / max * 100).toFixed(1)}%; background:${colorFn(r.label)}"></div>
+      </div>
+      <div class="bar-value">${r.count.toLocaleString('pt-PT')}</div>
+    </div>
+  `).join('');
+  container.querySelectorAll('.bar-fill').forEach(el => {
+    el.addEventListener('mousemove', e => showTip(e, simpleTip(`${el.dataset.label}: ${Number(el.dataset.count).toLocaleString('pt-PT')}${tipSuffix || ''}`)));
+    el.addEventListener('mouseleave', hideTip);
+  });
+}
+
+// ---------- hour / weekday charts (single series, ordered axis) ----------
+renderBarChart(
+  document.getElementById('hourChart'),
+  DATA.por_hora.map(h => ({ label: String(h.hora).padStart(2, '0') + 'h', count: h.acidentes })),
+  () => 'var(--series-1)',
+);
+renderBarChart(
+  document.getElementById('weekdayChart'),
+  DATA.por_dia_semana.map(d => ({ label: d.dia, count: d.acidentes })),
+  () => 'var(--series-1)',
+);
+
+// ---------- natureza chart (categorical) ----------
+const NATURE_COLORS = ['var(--series-1)', 'var(--series-2)', 'var(--series-3)', 'var(--series-4)',
+                       'var(--series-5)', 'var(--series-6)', 'var(--series-7)', 'var(--series-8)'];
+const natureColorMap = new Map(DATA.por_natureza.map((r, i) => [r.tipo, NATURE_COLORS[i % NATURE_COLORS.length]]));
+renderBarChart(
+  document.getElementById('natureChart'),
+  DATA.por_natureza.map(r => ({ label: r.tipo, count: r.acidentes })),
+  label => natureColorMap.get(label),
+);
+
+// ---------- district chart ----------
+renderBarChart(
+  document.getElementById('districtChart'),
+  DATA.por_distrito.map(r => ({ label: r.distrito, count: r.mortos + r.feridos_graves })),
+  () => 'var(--series-1)',
+  ' vítimas',
+);
+
+// ---------- year line chart ----------
+const yearData = DATA.por_ano;
+const svg = document.getElementById('yearChart');
+const W = 700, H = 260, PAD_L = 40, PAD_R = 16, PAD_T = 14, PAD_B = 28;
+const plotW = W - PAD_L - PAD_R, plotH = H - PAD_T - PAD_B;
+
+const maxVal = Math.max(...yearData.map(d => Math.max(d.mortos, d.feridos_graves)));
+function niceMax(v) {
+  const mag = Math.pow(10, Math.floor(Math.log10(Math.max(v, 1))));
+  const norm = v / mag;
+  const step = norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10;
+  return step * mag;
+}
+const yMax = niceMax(maxVal * 1.1);
+const xFor = i => PAD_L + (yearData.length === 1 ? plotW / 2 : (i / (yearData.length - 1)) * plotW);
+const yFor = v => PAD_T + plotH - (v / yMax) * plotH;
+
+function pathFor(key) {
+  return yearData.map((d, i) => `${i === 0 ? 'M' : 'L'} ${xFor(i).toFixed(1)} ${yFor(d[key]).toFixed(1)}`).join(' ');
+}
+
+let svgMarkup = '';
+// gridlines (4 steps) + y labels
+const steps = 4;
+for (let s = 0; s <= steps; s++) {
+  const v = (yMax / steps) * s;
+  const y = yFor(v);
+  svgMarkup += `<line class="lc-gridline" x1="${PAD_L}" x2="${W - PAD_R}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}"></line>`;
+  svgMarkup += `<text class="lc-axis-label" x="${PAD_L - 8}" y="${(y + 3).toFixed(1)}" text-anchor="end">${Math.round(v).toLocaleString('pt-PT')}</text>`;
+}
+// baseline
+svgMarkup += `<line class="lc-baseline" x1="${PAD_L}" x2="${W - PAD_R}" y1="${(PAD_T + plotH).toFixed(1)}" y2="${(PAD_T + plotH).toFixed(1)}"></line>`;
+// x labels (every year, or every other if many)
+const labelStride = yearData.length > 12 ? 2 : 1;
+yearData.forEach((d, i) => {
+  if (i % labelStride === 0 || i === yearData.length - 1) {
+    svgMarkup += `<text class="lc-axis-label" x="${xFor(i).toFixed(1)}" y="${H - 8}" text-anchor="middle">${d.ano}</text>`;
+  }
+});
+// lines
+svgMarkup += `<path d="${pathFor('feridos_graves')}" fill="none" stroke="var(--series-1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>`;
+svgMarkup += `<path d="${pathFor('mortos')}" fill="none" stroke="var(--series-8)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>`;
+// end markers with surface ring
+const lastI = yearData.length - 1;
+svgMarkup += `<circle cx="${xFor(lastI).toFixed(1)}" cy="${yFor(yearData[lastI].feridos_graves).toFixed(1)}" r="4" fill="var(--series-1)" stroke="var(--surface-1)" stroke-width="2"></circle>`;
+svgMarkup += `<circle cx="${xFor(lastI).toFixed(1)}" cy="${yFor(yearData[lastI].mortos).toFixed(1)}" r="4" fill="var(--series-8)" stroke="var(--surface-1)" stroke-width="2"></circle>`;
+// crosshair
+svgMarkup += `<line class="lc-crosshair" id="crosshair" x1="0" x2="0" y1="${PAD_T}" y2="${PAD_T + plotH}"></line>`;
+// hit areas (one per year, full plot height, width = step)
+const stepW = yearData.length > 1 ? plotW / (yearData.length - 1) : plotW;
+yearData.forEach((d, i) => {
+  const cx = xFor(i);
+  svgMarkup += `<rect class="lc-hit" data-i="${i}" x="${(cx - stepW / 2).toFixed(1)}" y="${PAD_T}" width="${stepW.toFixed(1)}" height="${plotH}"></rect>`;
+});
+svg.innerHTML = svgMarkup;
+
+document.getElementById('yearLegend').innerHTML = `
+  <div class="legend-item"><span class="legend-key" style="background:var(--series-1)"></span>Feridos graves</div>
+  <div class="legend-item"><span class="legend-key" style="background:var(--series-8)"></span>Vítimas mortais</div>
+`;
+
+const crosshair = document.getElementById('crosshair');
+svg.querySelectorAll('.lc-hit').forEach(hit => {
+  hit.addEventListener('mousemove', e => {
+    const i = Number(hit.dataset.i);
+    const d = yearData[i];
+    crosshair.setAttribute('x1', xFor(i).toFixed(1));
+    crosshair.setAttribute('x2', xFor(i).toFixed(1));
+    crosshair.style.opacity = '1';
+    const box = document.createElement('div');
+    const rowFg = document.createElement('div'); rowFg.className = 'tt-row';
+    rowFg.innerHTML = `<span class="tt-key" style="background:var(--series-1)"></span><span>${d.ano} · Feridos graves</span>`;
+    const valFg = document.createElement('span'); valFg.className = 'tt-val'; valFg.style.marginLeft = 'auto'; valFg.textContent = d.feridos_graves.toLocaleString('pt-PT');
+    rowFg.appendChild(valFg);
+    const rowM = document.createElement('div'); rowM.className = 'tt-row';
+    rowM.innerHTML = `<span class="tt-key" style="background:var(--series-8)"></span><span>Vítimas mortais</span>`;
+    const valM = document.createElement('span'); valM.className = 'tt-val'; valM.style.marginLeft = 'auto'; valM.textContent = d.mortos.toLocaleString('pt-PT');
+    rowM.appendChild(valM);
+    box.appendChild(rowFg); box.appendChild(rowM);
+    tooltip.innerHTML = '';
+    tooltip.appendChild(box);
+    tooltip.style.display = 'block';
+    tooltip.style.left = (e.clientX + 12) + 'px';
+    tooltip.style.top = (e.clientY + 12) + 'px';
+  });
+  hit.addEventListener('mouseleave', () => { crosshair.style.opacity = '0'; hideTip(); });
+});
+
+// ---------- top severe table ----------
+document.getElementById('severeBody').innerHTML = DATA.top_severos.map(r => `
+  <tr>
+    <td>${r.distrito}</td>
+    <td>${r.concelho}</td>
+    <td>${r.data}</td>
+    <td class="num-cell">${r.mortos}</td>
+    <td class="num-cell">${r.feridos_graves}</td>
+    <td>${r.via || '<em style="color:var(--text-muted)">—</em>'}</td>
+    <td>${r.natureza || '<em style="color:var(--text-muted)">—</em>'}</td>
+  </tr>
+`).join('');
+</script>
